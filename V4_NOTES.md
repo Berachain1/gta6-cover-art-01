@@ -1,93 +1,99 @@
-# gta6-cover-art-01 — V4 NOTES (Chaos Key-Art)
+# gta6-cover-art-01 — V4 notes (Chaos Key-Art)
 
-TIDAK disubmit, TIDAK di-push, TIDAK di-commit. HEAD masih `fb3c0fc`; semua
-kerja di worktree (12 file berubah + 2 foto baru car.jpg/coast.jpg dari v3).
-Recording `01a1f3ee-5b16-772e-b03a-8d8309487db3` (PID 11313) masih jalan,
-tidak disentuh. Deadline Sabtu 21 Nov 17:30 WIB, kuota 3/3 utuh.
+Nothing submitted, nothing pushed, nothing committed yet. HEAD is still
+`fb3c0fc`; all v4 work sits in the worktree (12 files changed, plus two
+new photos from v3, car.jpg and coast.jpg). Recording
+`01a1f3ee-5b16-772e-b03a-8d8309487db3` (PID 11313) is still running and
+untouched. Deadline Saturday 21 Nov 17:30 WIB; quota still a full 3/3.
 
-## Yang berubah (v3 → v4)
+## Changes (v3 to v4)
 
-Layout baru **`chaos`** (default di app + semua 4 screenshot) — formula
-key-art top 3, dipelajari dari gambar asli do-tinh / amber-lark-66 /
-ahmadfdn (di `/tmp/cover-top/`):
+A new **`chaos`** layout (now the default in the app and in all four
+screenshots) — the key-art formula of the top 3, learned from the real
+images of do-tinh, amber-lark-66, and ahmadfdn (in `/tmp/cover-top/`):
 
-- **Judul menabrak foto, bukan di band.** Tidak ada lagi title band 30%:
-  foto jalan setinggi 0.88 frame di BELAKANG judul; judul PALM HEAT
-  (0.72 tinggi zona, sprawl 0.88 lebar, outline 0.13 + magenta shadow)
-  mulai dari 50% frame dan menutupi foto seperti SUNSET STATE / VICE STATE.
-- **Panel miring:** hero pakai slant 36 (tepi kanan diagonal ala ahmadfdn);
-  rooftop +0.02, fisherman −0.03, car +0.025, coast −0.02 rad (rotasi baru
-  di `drawCoverGrid`, clip dalam ruang terotasi + gambar 1.06× supaya
-  sudut tertutup, stroke di dalam transform yang sama).
-- **Scrim ringan (chaos saja):** 0 → 0.18 → 0.38 → 0.55 (dulu 0.05 → 0.9).
-  Scrim berat v4-awwal menenggelamkan panel bawah jadi hitam — do-tinh
-  tidak pakai scrim sama sekali, judulnya hanya outline + shadow.
-- **Subtitle pink** `#ff5da2` + glow magenta (ala "Neon Tide"), tanpa pelat
-  gelap. Putih di atas foto terang tidak terbaca.
-- **VOL. 06** (chip cyan) + **COLLECTOR'S EDITION** (pill pink) di
-  kanan-bawah zona judul; **WANTED ★★★★★** (pill gelap, teks emas) di
-  panel mobil — ketiganya furniture yang v3 tidak punya.
-- **Starburst EST. 2026 pindah ke junction** hero/kolom-tengah (dulu di
-  junction lain sampai menutupi chip PIER 26); WANTED juga pindah karena
-  posisi awalnya tertutup ribbon ORIGINAL di pojok kanan-atas.
-- **Panel portrait/square diperpanjang sampai 0.88h** — versi awal
-  meninggalkan void hitam besar di bawah judul (subtitle melayang di
-  hitam). Caption chip yang panelnya masuk jauh ke zona judul di-skip
-  (ambang 60px) supaya tidak jadi fragmen teks setengah tertutup huruf
-  ("DOWN" sempat terlihat di v4-awal, sudah hilang).
-- **Grade Sunset lebih hangat:** `warmHighlights()` baru di grades.js —
-  lift merah/oranye di atas lum 175 saja, jadi langit bersinar oranye
-  seperti #1 sementara kulit (mid-tone) tidak berubah.
+- **The title crashes into the photo instead of sitting in a band.** The
+  30%-tall title band is gone: the street photo, 0.88 of the frame tall,
+  sits BEHIND the title; the PALM HEAT title (0.72 zone height, 0.88
+  width sprawl, 0.13 outline plus magenta shadow) starts at 50% of the
+  frame and covers the photo the way SUNSET STATE / VICE STATE do.
+- **Tilted panels:** the hero uses slant 36 (diagonal right edge in
+  ahmadfdn's style); rooftop +0.02, fisherman −0.03, car +0.025, coast
+  −0.02 rad (new rotation in `drawCoverGrid`, clipped inside the
+  rotated space, drawn 1.06× so the corners stay covered, stroke inside
+  the same transform).
+- **Light scrim (chaos only):** 0 → 0.18 → 0.38 → 0.55 (was 0.05 → 0.9).
+  The heavy scrim in early v4 drowned the lower panels in black —
+  do-tinh uses no scrim at all, just outline plus shadow on the title.
+- **Pink subtitle** `#ff5da2` with a magenta glow (like "Neon Tide"),
+  no dark plate. White over a bright photo is unreadable.
+- **VOL. 06** (cyan chip) plus **COLLECTOR'S EDITION** (pink pill) at
+  the bottom-right of the title zone; **WANTED ★★★★★** (dark pill,
+  gold text) on the car panel — all three are furniture v3 lacked.
+- **The EST. 2026 starburst moved to the junction** of the hero and the
+  middle column (it used to sit on another junction where it covered the
+  PIER 26 chip); WANTED moved too, because its first spot was hidden
+  behind the ORIGINAL ribbon in the top-right corner.
+- **Portrait/square panels now run to 0.88h** — the first version left a
+  big black void under the title (the subtitle floating on black).
+  Caption chips whose panels run far into the title zone are skipped
+  (60px threshold) so they do not become half-covered text fragments
+  ("DOWN" showed up in early v4, now gone).
+- **A warmer Sunset grade:** new `warmHighlights()` in grades.js —
+  red/orange lift only above lum 175, so the sky glows orange like #1's
+  while skin (mid-tone) stays untouched.
 
-Yang dipertahankan dari v3: grade Sunset fotografis (bukan gradient-map),
-8 foto berbeda, caption chips, quote pill, bottom strip (palem + tagline
-+ fine print + barcode), starburst, ribbon ORIGINAL · FAN MADE.
+Kept from v3: the photographic Sunset grade (not a gradient map),
+8 different photos, caption chips, quote pill, bottom strip (palms +
+tagline + fine print + barcode), starburst, ORIGINAL · FAN MADE ribbon.
 
-## Tes (semua lolos)
+## Tests (all passing)
 
-- **Gate lokal: 4 passed, 0 failed, 17 skipped, 5 at-submission**
-  (dijalankan 2× — sebelum dan sesudah warmHighlights).
-- **Matriks 6 layout × 4 grade = 24 render**, semua PNG jadi, sd piksel
-  57–75 (tidak ada yang blank), **zero console/page/request error**.
-- **Export nyata:** "Export all 3 sizes" diklik di headless Chrome —
-  1920×1080 (3.019.160 B), 1080×1350, 1080×1080, semua PNG valid.
-- **4 screenshot baru** (semua ≤256 KiB) dan **dilihat sendiri**:
-  1-cover 173.456 B, 2-editor 244.826 B, 3-portrait 203.236 B,
-  4-square 168.868 B. Sheet head-to-head:
-  `~/workspace/make-fun/vs-top3-cover-art-v4.jpg` (dilihat sendiri).
-- Editor: default "Chaos Key-Art", 6 layout + 4 grade switch semua jalan,
-  upload 8→9 thumb, pan/zoom tanpa error.
+- **Local gate: 4 passed, 0 failed, 17 skipped, 5 at-submission**
+  (run twice — before and after warmHighlights).
+- **Matrix 6 layouts × 4 grades = 24 renders**, every PNG produced,
+  pixel sd 57–75 (none blank), **zero console/page/request errors**.
+- **Real export:** "Export all 3 sizes" clicked in headless Chrome —
+  1920×1080 (3,019,160 B), 1080×1350, 1080×1080, all valid PNGs.
+- **4 new screenshots** (all ≤256 KiB) and **viewed by me**:
+  1-cover 173,456 B, 2-editor 244,826 B, 3-portrait 203,236 B,
+  4-square 168,868 B. Head-to-head sheet:
+  `~/workspace/make-fun/vs-top3-cover-art-v4.jpg` (viewed by me).
+- Editor: default "Chaos Key-Art", all 6 layout + 4 grade switches work,
+  upload 8→9 thumbs, pan/zoom with no errors.
 
-## Perbandingan jujur vs top 3 (board ~23:30 WIB: #1 do-tinh 93.94,
-## #2 amber-lark-66 93.64, #3 ahmadfdn 93.36, #10 hayatoshima 92.16, #50 87.27)
+## Honest comparison with the top 3 (board around 23:30 WIB: #1 do-tinh
+## 93.94, #2 amber-lark-66 93.64, #3 ahmadfdn 93.36, #10 hayatoshima
+## 92.16, #50 87.27)
 
-Formula kini SAMA di semua sumbu yang terlihat: judul menabrak foto,
-panel miring/diagonal, 6 foto, grade fotografis hangat, caption chips,
-quote pill, strip + barcode, starburst di junction, VOL. 06, WANTED,
-COLLECTOR'S EDITION. Sheet berdampingan: kita sudah satu bahasa visual
-dengan #1/#3 — bukan lagi grid rapi vs kolase mereka.
+The formula now matches on every visible axis: title crashing into the
+photo, tilted/diagonal panels, 6 photos, warm photographic grade,
+caption chips, quote pill, strip + barcode, starburst on a junction,
+VOL. 06, WANTED, COLLECTOR'S EDITION. Side by side, we now speak the
+same visual language as #1/#3 — no longer a tidy grid against their
+collages.
 
-**Verdict: top 10 kini KREDIBEL — bukan lagi "plausible" kosong.** v3
-diestimasi ~87–88 (zona #50); v4 menutup SEMUA gap formula yang
-teridentifikasi (band datar, tanpa tilt, tanpa VOL/WANTED, scrim hitam,
-grade pucat). Satu-satunya bukti tetap dev grade setelah submit.
+**Verdict: top 10 is now CREDIBLE — not empty "plausible" anymore.** v3
+was estimated at ~87–88 (the #50 zone); v4 closes EVERY identified
+formula gap (flat band, no tilt, no VOL/WANTED, black scrim, pale
+grade). The only proof is still the dev grade after submit.
 
-**Sisa gap (disebut dengan nama):**
-1. **Glow foto sumber** — langit #1 adalah langit sunset asli (oranye
-   membara); foto hero kita siang hari. Warm lift membantu tapi tidak
-   bisa mengubah isi foto. Ini batas materi, bukan layout.
-2. **Bayangan judul #1 lebih dalam** — drop shadow ungu mereka sedikit
-   lebih tebal dari kita; judul kita tetap terbaca penuh.
-3. **Wajah di baris bawah portrait/square** — di shot 3/4, wajah pria
-   rooftop tertutup sebagian huruf "P". Shot 1 (landscape, yang utama)
-   tidak punya masalah ini — semua wajah utuh.
-4. **Panel neon couple (landscape)** — sebagian besar tertutup huruf
-   judul, hanya papan neon yang terlihat; sama seperti panel bawah #1
-   (motor) yang juga setengah tertutup — ini sifat formula chaos, bukan
-   cacat unik kita.
+**Remaining gaps (named):**
+1. **Source-photo glow** — #1's sky is a real sunset sky (burning
+   orange); our hero photo is daytime. The warm lift helps but cannot
+   change what is in the photo. A material limit, not a layout one.
+2. **#1's title shadow is deeper** — their purple drop shadow is a
+   little thicker than ours; our title still reads fully.
+3. **Faces in the lower portrait/square row** — in shots 3/4, the
+   rooftop man's face is partly behind the letter "P". Shot 1
+   (landscape, the main one) has no such problem — every face is whole.
+4. **Neon-couple panel (landscape)** — mostly covered by title letters,
+   only the neon sign shows; the same as #1's lower panel (motorbike),
+   also half covered — a property of the chaos formula, not a flaw
+   unique to us.
 
-## Yang perlu parent lakukan sebelum submit
+## What the parent must do before submit
 
-Commit + push ke **repo publik BARU** (drand anchor — repo harus dibuat
-setelah 2026-11-19 10:30 UTC), `.makefun/owner.json`, tulis muse-usage,
-seal recording PID 11313, lalu submit.
+Commit + push to a **NEW public repo** (drand anchor — the repo must be
+created after 2026-11-19 10:30 UTC), `.makefun/owner.json`, write
+muse-usage, seal recording PID 11313, then submit.

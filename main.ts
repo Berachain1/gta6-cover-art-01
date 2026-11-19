@@ -1,48 +1,53 @@
-// main.ts — entry point for the Palm Heat Cover Studio submission.
+// main.ts — the entry point the grader executes for Palm Heat Cover Studio.
 //
-// This entry's app is the offline cover maker in app/ (index.html + ES
-// modules under app/src/, vendored Anton + Pacifico fonts, eight sample
-// photos): six multi-panel layouts, four gradient-map / poster-ink grades,
-// an editor with per-panel crop and position, undo/redo, and PNG export in
-// 1920×1080, 1080×1350 and 1080×1080. The screenshots in screenshots/ are
-// the app's own renders (the cover first, then the editor, then the
-// portrait and square covers).
+// The deliverable is an offline cover maker in app/: index.html, the ES
+// modules under app/src/, Anton and Pacifico shipped as files, and eight
+// sample photos. Six multi-panel layouts, four grades (gradient-map and
+// poster-ink), an editor where every panel can be cropped and moved,
+// undo/redo, plus PNG export at 1920x1080, 1080x1350, and 1080x1080.
+// screenshots/ holds renders the app painted itself — cover, editor,
+// portrait cover, and square cover, in that order.
 //
-// Node 22, standard library only. It copies app/ and screenshots/ from
-// beside this file to /output and writes /output/dossier.json — the summary
-// the judge reads — with the vendored make.fun library, which must stay
-// byte-for-byte unchanged.
+// Plain Node 22, zero dependencies. This script copies app/ and
+// screenshots/ from next to itself into the output directory, then writes
+// dossier.json there — the summary the judge reads — via the vendored
+// make.fun library. That library file must never be touched; it has to
+// stay byte-for-byte as shipped.
 //
-// Serve it locally with `node serve.ts`, then open http://localhost:8080.
-// Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
+// Run it by hand with `node serve.ts` and http://localhost:8080. Where
+// no grader container exists, MAKEFUN_OUTPUT_DIR takes the place of
+// /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { buildDossier } from './vendor/makefun-app.ts';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { buildDossier } from "./vendor/makefun-app.ts";
 
-const here = fileURLToPath(new URL('.', import.meta.url));
-const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+const baseDir = fileURLToPath(new URL("./", import.meta.url));
+const outDir = process.env.MAKEFUN_OUTPUT_DIR === undefined ? "/output" : process.env.MAKEFUN_OUTPUT_DIR;
+const appDir = join(baseDir, "app");
+const shotsDir = join(baseDir, "screenshots");
 
-mkdirSync(out, { recursive: true });
-cpSync(join(here, 'app'), join(out, 'app'), { recursive: true });
-mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+mkdirSync(outDir, { recursive: true });
+cpSync(appDir, join(outDir, "app"), { recursive: true });
+mkdirSync(join(outDir, "screenshots"), { recursive: true });
+if (existsSync(shotsDir)) {
+  cpSync(shotsDir, join(outDir, "screenshots"), { recursive: true });
+}
 
-// The scorer's own caps (reference/gate.json): only text_max_bytes shapes
-// the bytes; the other limits refuse an entry the scorer would refuse —
-// more than 4 screenshots or one over 256 KiB; more than 993 files in app/
-// or 48 MiB of app files in all; a path under app/ over 1000 bytes; app/
-// counts beside /output's own 1000-entry cap, its screenshots/ and
+// Caps from the scorer's own reference/gate.json. text_max_bytes is the
+// only one that shapes the byte count; the rest mirror refusals the
+// scorer itself would make — more than 4 screenshots, or any one over
+// 256 KiB; more than 993 files in app/, or 48 MiB of app files in
+// total; any path under app/ longer than 1000 bytes. app/ is counted
+// next to /output's own 1000-entry cap, its screenshots/ and
 // dossier.json.
-writeFileSync(
-  join(out, 'dossier.json'),
-  buildDossier(out, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    app_max_files: 993,
-    app_max_bytes: 50331648,
-    app_path_max_bytes: 1000,
-  }),
-);
+const dossier = buildDossier(outDir, {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+  app_max_files: 993,
+  app_max_bytes: 50331648,
+  app_path_max_bytes: 1000,
+});
+writeFileSync(join(outDir, "dossier.json"), dossier);
