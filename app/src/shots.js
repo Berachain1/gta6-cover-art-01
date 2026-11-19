@@ -22,11 +22,13 @@ const PARAM_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
 function copyParams(params, st) {
-  for (const key of PARAM_KEYS) {
+  for (let k = 0; k < PARAM_KEYS.length; k += 1) {
+    const key = PARAM_KEYS[k];
     const value = params.get(key);
-    if (value !== null && value !== "") {
-      st[key] = value;
+    if (value === null || value === "") {
+      continue;
     }
+    st[key] = value;
   }
   const subtitle = params.get("subtitle");
   if (subtitle !== null) {
@@ -34,10 +36,8 @@ function copyParams(params, st) {
   }
 }
 
-/** Paints the cover scene onto the page canvas at the post size. */
-async function paintCoverScene(params, kit) {
-  document.body.classList.add("shot-cover");
-  copyParams(params, kit.state);
+/** Loads both display faces explicitly before anything is drawn. */
+async function loadDisplayFonts() {
   await document.fonts.ready;
   // fonts.ready can settle before Anton/Pacifico have even started
   // loading (nothing on the page uses them until the canvas does), and
@@ -45,9 +45,22 @@ async function paintCoverScene(params, kit) {
   // load both faces explicitly before anything is measured or drawn.
   await document.fonts.load("100px Anton");
   await document.fonts.load("40px Pacifico");
+}
+
+/** Paints the cover scene onto the page canvas at the post size. */
+async function paintCoverScene(params, kit) {
+  document.body.classList.add("shot-cover");
+  copyParams(params, kit.state);
+  await loadDisplayFonts();
   await kit.loadSamplePhotos();
-  const wanted = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
-  const dims = POST_DIMS[wanted] === undefined ? POST_DIMS.landscape : POST_DIMS[wanted];
+  let wanted = kit.state.size;
+  if (wanted === undefined || wanted === "") {
+    wanted = "landscape";
+  }
+  let dims = POST_DIMS[wanted];
+  if (dims === undefined) {
+    dims = POST_DIMS.landscape;
+  }
   kit.canvas.width = dims[0];
   kit.canvas.height = dims[1];
   drawCoverGrid(kit.canvas, kit.state, kit.photos);
@@ -58,12 +71,7 @@ async function paintCoverScene(params, kit) {
 /** Paints the editor scene: controls wired, preview drawn. */
 async function paintEditorScene(params, kit) {
   copyParams(params, kit.state);
-  await document.fonts.ready;
-  // Same explicit load as the cover scene: fonts.ready alone can settle
-  // before the faces have started loading, and the preview measures its
-  // title with whatever font is there.
-  await document.fonts.load("100px Anton");
-  await document.fonts.load("40px Pacifico");
+  await loadDisplayFonts();
   await kit.loadSamplePhotos();
   kit.bindEditor();
   kit.syncControls();

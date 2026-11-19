@@ -1,65 +1,65 @@
 @font-face{
-  src: url("./fonts/Anton-Regular.ttf") format("truetype");
-  font-family: "Anton";
+  font-family: "Pacifico";
+  src: url("./fonts/Pacifico-Regular.ttf") format("truetype");
   font-display: swap;
 }
 @font-face{
-  src: url("./fonts/Pacifico-Regular.ttf") format("truetype");
-  font-family: "Pacifico";
+  font-family: "Anton";
+  src: url("./fonts/Anton-Regular.ttf") format("truetype");
   font-display: swap;
 }
 
 html, body{
+  margin: 0; min-height: 100%;
   background: #14041F; color: #F5EEF7;
-  min-height: 100%; margin: 0;
   font: 15px/1.45 system-ui, sans-serif;
 }
 *{ box-sizing: border-box; }
 
 .topbar{
-  gap: 16px; padding: 12px 20px;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 12px 20px;
   background: linear-gradient(90deg, #FF2E7E, #FF7A2F);
   border-bottom: 3px solid #0D0214;
 }
 .brand{
-  min-width: 0; gap: 12px;
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: 12px;
+  min-width: 0;
 }
 .logo{
-  width: 44px; height: 44px; place-items: center;
-  display: grid; flex: none;
+  display: grid; place-items: center; flex: none;
+  width: 44px; height: 44px;
   border-radius: 10px; background: #14041F; color: #FFD23F;
   font: 20px "Anton", sans-serif; letter-spacing: 1px;
 }
 .topbar h1{
-  color: #FFFFFF; margin: 0;
+  margin: 0; color: #FFFFFF;
   font: 22px "Anton", sans-serif; letter-spacing: 1px;
 }
-.topbar p{ color: #FFE9F2; font-size: 13px; margin: 0; }
+.topbar p{ margin: 0; color: #FFE9F2; font-size: 13px; }
 .top-actions{ display: flex; flex: none; gap: 8px; }
 
 .app{
-  gap: 20px; padding: 18px 20px 28px;
-  display: flex; align-items: flex-start;
+  display: flex; align-items: flex-start; gap: 20px;
+  padding: 18px 20px 28px;
 }
 .controls{
+  display: flex; flex: none; flex-direction: column; gap: 10px;
   width: 308px; max-height: calc(100vh - 110px);
-  display: flex; flex: none; flex-direction: column;
-  gap: 10px; overflow-y: auto; padding-right: 2px;
+  overflow-y: auto; padding-right: 2px;
 }
 .group{
-  gap: 8px; padding: 12px;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px;
   border: 1px solid #3D1B4D; border-radius: 12px; background: #22102E;
 }
 .group h2{
-  color: #FFD23F; margin: 0;
+  margin: 0; color: #FFD23F;
   font: 15px "Anton", sans-serif; letter-spacing: 1px;
 }
 .group label{
-  gap: 5px; color: #E8D5EE;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; gap: 5px;
+  color: #E8D5EE;
   font-size: 13px; font-weight: 600;
 }
 .group label.check{
@@ -72,7 +72,7 @@ input[type=text]{
   border: 1px solid #5B2A6E; border-radius: 7px;
   background: #14041F; color: #FFFFFF; font: inherit;
 }
-input[type=range]{ accent-color: #FF2E7E; width: 100%; }
+input[type=range]{ width: 100%; accent-color: #FF2E7E; }
 
 button{
   padding: 9px 12px; border: 0; border-radius: 8px;
@@ -83,7 +83,7 @@ button:hover{ background: #522464; }
 button:disabled{ opacity: .4; cursor: default; }
 button.primary{ background: #FF2E7E; }
 button.primary:hover{ background: #FF4D90; }
-button.big{ font-size: 16px; padding: 12px; }
+button.big{ padding: 12px; font-size: 16px; }
 
 .file-btn{
   display: block; padding: 10px;
@@ -105,8 +105,8 @@ button.big{ font-size: 16px; padding: 12px; }
   border: 2px solid transparent; border-radius: 6px; background: none;
 }
 .thumb img{
-  width: 100%; height: 100%;
   display: block;
+  width: 100%; height: 100%;
   object-fit: cover;
 }
 .thumb.in-use{ border-color: #FFD23F; }
@@ -126,13 +126,13 @@ button.big{ font-size: 16px; padding: 12px; }
 }
 .stars button.active{ color: #FFD23F; }
 
-.hint{ color: #C9A8D4; font-size: 13px; margin: 0; }
+.hint{ margin: 0; color: #C9A8D4; font-size: 13px; }
 #status{ margin: 0; min-height: 20px; color: #FFD23F; font-size: 13px; }
 
 .stage{ flex: 1; min-width: 0; }
 .stage canvas{
-  width: 100%; height: auto;
   display: block;
+  width: 100%; height: auto;
   border-radius: 6px; background: #0D0214;
   box-shadow: 0 12px 40px rgba(0,0,0,.55);
 }

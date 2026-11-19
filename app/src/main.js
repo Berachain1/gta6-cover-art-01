@@ -10,39 +10,40 @@
 import { drawCoverGrid, exportCoverPNG, EXPORT_SIZES, LAYOUTS, GRADES, layoutPanels, panelCount } from "./cover.js";
 import { runShot } from "./shots.js";
 
-// The sample photos the app ships with: file plus the label the strip
-// shows under each thumbnail.
+// The sample photos the app ships with: [file, label the strip shows
+// under each thumbnail].
 const SAMPLE_PHOTOS = [
-  { src: "samples/woman.jpg", name: "Woman · convertible" },
-  { src: "samples/fisherman.jpg", name: "Fisherman · pier" },
-  { src: "samples/neon.jpg", name: "Friends · neon street" },
-  { src: "samples/rooftop.jpg", name: "Man · rooftop" },
-  { src: "samples/boulevard.jpg", name: "Boulevard · kit" },
-  { src: "samples/pier.jpg", name: "Pier · kit" },
-  { src: "samples/car.jpg", name: "Orange car · deco street" },
-  { src: "samples/coast.jpg", name: "Coast road · sunset" },
-  { src: "samples/sunset.jpg", name: "Woman · sunset convertible" },
-];
+  ["samples/woman.jpg", "Woman · convertible"],
+  ["samples/fisherman.jpg", "Fisherman · pier"],
+  ["samples/neon.jpg", "Friends · neon street"],
+  ["samples/rooftop.jpg", "Man · rooftop"],
+  ["samples/boulevard.jpg", "Boulevard · kit"],
+  ["samples/pier.jpg", "Pier · kit"],
+  ["samples/car.jpg", "Orange car · deco street"],
+  ["samples/coast.jpg", "Coast road · sunset"],
+  ["samples/sunset.jpg", "Woman · sunset convertible"],
+].map(([src, name]) => ({ src, name }));
 
-// Caption chips for the panels (place / time / line), one per sample
+// Caption chips for the panels [place, time, line], one per sample
 // photo. The wording is original — the same kind of location/time
 // chips the top-5 covers carry on theirs.
 const CAPTIONS = [
-  { place: "CORAL DRIVE", time: "6:47 PM", line: "ENGINE RUNNING" },
-  { place: "PIER 26", time: "5:30 AM", line: "FIRST CAST" },
-  { place: "NEON MILE", time: "11:50 PM", line: "NO BRAKES" },
-  { place: "ROOFTOP 9", time: "8:30 PM", line: "CITY LIGHTS" },
-  { place: "PALM ROW", time: "9:15 PM", line: "AFTER DARK" },
-  { place: "TOWER 2", time: "6:10 PM", line: "GOLDEN HOUR" },
-  { place: "DECO ROW", time: "7:05 PM", line: "TOP DOWN" },
-  { place: "COAST ROAD", time: "6:58 PM", line: "LAST LIGHT" },
-  { place: "CORAL DRIVE", time: "7:42 PM", line: "GOLDEN HOUR" },
-];
+  ["CORAL DRIVE", "6:47 PM", "ENGINE RUNNING"],
+  ["PIER 26", "5:30 AM", "FIRST CAST"],
+  ["NEON MILE", "11:50 PM", "NO BRAKES"],
+  ["ROOFTOP 9", "8:30 PM", "CITY LIGHTS"],
+  ["PALM ROW", "9:15 PM", "AFTER DARK"],
+  ["TOWER 2", "6:10 PM", "GOLDEN HOUR"],
+  ["DECO ROW", "7:05 PM", "TOP DOWN"],
+  ["COAST ROAD", "6:58 PM", "LAST LIGHT"],
+  ["CORAL DRIVE", "7:42 PM", "GOLDEN HOUR"],
+].map(([place, time, line]) => ({ place, time, line }));
 
-// Default crop per panel, per layout. fx/fy is the focus point (0..1)
-// inside the photo; zoom is >= 1. The crops are picked so faces stay
-// in frame and no panel shows an awkward body-part cut. A crop may
-// carry an `sq` override used only for the square render.
+// Default crop per panel, per layout. A crop is
+// [photo, fx, fy, zoom], with an optional fifth slot carrying the
+// square-only override as [photo, fx, fy, zoom]. fx/fy is the focus
+// point (0..1) inside the photo; zoom is >= 1. The crops are picked
+// so faces stay in frame and no panel shows an awkward body-part cut.
 //
 // hero-vice is MULTI-SUBJECT (v3): six different photos, one per
 // panel — the variety the top-5 covers have. The hero is the woman
@@ -50,70 +51,79 @@ const CAPTIONS = [
 // 0.32); the other panels are the rooftop man, the neon couple, the
 // fisherman, the orange car and the coast road, each cropped so its
 // subject stays in frame.
+//
+// chaos is the v4 default: the top-3 key-art collage. Same six
+// photos as hero-vice (woman hero, rooftop man, neon couple,
+// fisherman, orange car, coast road), each cropped so its subject
+// stays in frame. v5: the hero is the SUNSET woman (photo 8, a
+// blazing sky — #1's glow was the one gap no layout fix could
+// close). The 3-panel row in portrait and square runs P1 P2 P3,
+// and the title crashes over the whole row — a face in the LEFT
+// column sits behind the "P" and can never escape it, so the row
+// is ordered face-free on the left: car (no face), neon, rooftop
+// (right column, where the fisherman's face already escaped the
+// "T"). Landscape is unaffected: P1 mid-top and P3 right-top both
+// sit fully above the title, so car, rooftop and fisherman all stay
+// whole there. Square is the exception: its row is short (0.44h),
+// the title's letters cover the whole row top, and the rooftop
+// face — at the top of its photo — cannot be cropped below the
+// letters at any zoom (verified: zoom 1.35 only pushed the beard
+// below them). So P3 carries an `sq` override: the coast road (no
+// face) in square only. The override lives in cover.js
+// (drawCoverGrid, w === h).
+function toCrop(t) {
+  let c = { photo: t[0], fx: t[1], fy: t[2], zoom: t[3] };
+  if (t[4] !== undefined) {
+    c.sq = { photo: t[4][0], fx: t[4][1], fy: t[4][2], zoom: t[4][3] };
+  }
+  return c;
+}
+
 const ASSIGNMENTS_DEFAULT = {
-  // chaos is the v4 default: the top-3 key-art collage. Same six
-  // photos as hero-vice (woman hero, rooftop man, neon couple,
-  // fisherman, orange car, coast road), each cropped so its subject
-  // stays in frame. v5: the hero is the SUNSET woman (photo 8, a
-  // blazing sky — #1's glow was the one gap no layout fix could
-  // close). The 3-panel row in portrait and square runs P1 P2 P3,
-  // and the title crashes over the whole row — a face in the LEFT
-  // column sits behind the "P" and can never escape it, so the row
-  // is ordered face-free on the left: car (no face), neon, rooftop
-  // (right column, where the fisherman's face already escaped the
-  // "T"). Landscape is unaffected: P1 mid-top and P3 right-top both
-  // sit fully above the title, so car, rooftop and fisherman all stay
-  // whole there. Square is the exception: its row is short (0.44h),
-  // the title's letters cover the whole row top, and the rooftop
-  // face — at the top of its photo — cannot be cropped below the
-  // letters at any zoom (verified: zoom 1.35 only pushed the beard
-  // below them). So P3 carries an `sq` override: the coast road (no
-  // face) in square only. The override lives in cover.js
-  // (drawCoverGrid, w === h).
   chaos: [
-    { photo: 8, fx: 0.42, fy: 0.32, zoom: 1.05 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
-    { photo: 3, fx: 0.48, fy: 0.28, zoom: 1, sq: { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 } },
-    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
-  ],
+    [8, 0.42, 0.32, 1.05],
+    [6, 0.55, 0.55, 1.15],
+    [2, 0.55, 0.42, 1.1],
+    [3, 0.48, 0.28, 1, [7, 0.45, 0.55, 1.15]],
+    [1, 0.48, 0.3, 1],
+    [7, 0.45, 0.55, 1.15],
+  ].map(toCrop),
   "hero-vice": [
-    { photo: 0, fx: 0.42, fy: 0.32, zoom: 1.05 },
-    { photo: 3, fx: 0.48, fy: 0.3, zoom: 1.15 },
-    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
-    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
-  ],
+    [0, 0.42, 0.32, 1.05],
+    [3, 0.48, 0.3, 1.15],
+    [2, 0.55, 0.42, 1.1],
+    [1, 0.48, 0.3, 1],
+    [6, 0.55, 0.55, 1.15],
+    [7, 0.45, 0.55, 1.15],
+  ].map(toCrop),
   "vice-grid": [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.15 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.05 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 4, fx: 0.5, fy: 0.3, zoom: 1.25 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
-    { photo: 2, fx: 0.72, fy: 0.45, zoom: 1.4 },
-  ],
+    [0, 0.5, 0.32, 1.15],
+    [3, 0.5, 0.35, 1.1],
+    [1, 0.5, 0.35, 1.15],
+    [2, 0.5, 0.45, 1.05],
+    [6, 0.55, 0.55, 1.15],
+    [4, 0.5, 0.3, 1.25],
+    [7, 0.45, 0.55, 1.15],
+    [2, 0.72, 0.45, 1.4],
+  ].map(toCrop),
   "hero-three": [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.05 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.15 },
-  ],
+    [0, 0.5, 0.32, 1.05],
+    [2, 0.5, 0.45, 1.1],
+    [1, 0.5, 0.35, 1.2],
+    [3, 0.5, 0.35, 1.15],
+  ].map(toCrop),
   tilted: [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.2 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.1 },
-  ],
+    [0, 0.5, 0.32, 1.1],
+    [1, 0.5, 0.35, 1.15],
+    [2, 0.5, 0.45, 1.1],
+    [3, 0.5, 0.35, 1.2],
+    [6, 0.55, 0.55, 1.1],
+  ].map(toCrop),
   "full-bleed": [
-    { photo: 0, fx: 0.5, fy: 0.35, zoom: 1.05 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
-  ],
+    [0, 0.5, 0.35, 1.05],
+    [2, 0.5, 0.45, 1.1],
+    [1, 0.5, 0.35, 1.2],
+  ].map(toCrop),
 };
 
 /** A fresh default state (screenshot scenes start from this as well). */
@@ -154,10 +164,8 @@ export function loadImage(url) {
 /** Loads every sample photo; resolves once all are drawable. */
 export async function loadSamplePhotos() {
   photos.length = 0;
-  let n = 0;
-  while (n < SAMPLE_PHOTOS.length) {
+  for (let n = 0; n < SAMPLE_PHOTOS.length; n += 1) {
     photos.push(await loadImage(SAMPLE_PHOTOS[n].src));
-    n += 1;
   }
   return photos;
 }
@@ -170,7 +178,7 @@ let lastPanels = [];
 
 /** Serialises the editable part of the state for undo / redo. */
 function snapshotState() {
-  const copy = { ...state };
+  let copy = { ...state };
   delete copy.selectedPanel;
   return JSON.stringify(copy);
 }
@@ -233,11 +241,11 @@ export function paintPreview() {
 
 /** Outlines the selected panel on the preview canvas. */
 function drawSelection() {
-  const ctx = canvas.getContext("2d");
   const sel = lastPanels[state.selectedPanel];
   if (sel === undefined) {
     return; // no panel selected
   }
+  const ctx = canvas.getContext("2d");
   ctx.save();
   ctx.strokeStyle = "#ffd23f";
   ctx.lineWidth = Math.max(3, canvas.width / 480);
@@ -259,7 +267,7 @@ export function fillAllWithPhoto(photoIndex) {
   pushUndo();
   const fxList = [0.5, 0.3, 0.7, 0.5, 0.25, 0.75, 0.5, 0.35];
   const fyList = [0.32, 0.45, 0.4, 0.3, 0.5, 0.42, 0.6, 0.35];
-  for (const name of Object.keys(state.assignments)) {
+  for (const name in state.assignments) {
     state.assignments[name] = state.assignments[name].map((a, i) => ({
       ...a,
       photo: photoIndex,
@@ -307,18 +315,20 @@ function syncControls() {
   setInput("subtitle", state.subtitle);
   setInput("place", state.place);
   setInput("tagline", state.tagline);
-  document.querySelectorAll("#layout-pick button").forEach((b) => {
+  for (const b of document.querySelectorAll("#layout-pick button")) {
     b.classList.toggle("active", b.dataset.layout === state.layout);
-  }); // layout buttons
-  document.querySelectorAll("#grade-pick button").forEach((b) => {
+  } // layout buttons
+  for (const b of document.querySelectorAll("#grade-pick button")) {
     b.classList.toggle("active", b.dataset.grade === state.grade);
-  }); // grade buttons
-  document.querySelectorAll("#size-pick button").forEach((b) => {
+  } // grade buttons
+  for (const b of document.querySelectorAll("#size-pick button")) {
     b.classList.toggle("active", b.dataset.size === state.size);
-  }); // size buttons
-  document.querySelectorAll("#heat-pick button").forEach((b, i) => {
-    b.classList.toggle("active", i < state.heat);
-  }); // heat stars
+  } // size buttons
+  let hi = 0;
+  for (const b of document.querySelectorAll("#heat-pick button")) {
+    b.classList.toggle("active", hi < state.heat);
+    hi += 1;
+  } // heat stars
   const oneBox = document.querySelector("#one-photo");
   if (oneBox !== null) {
     oneBox.checked = state.onePhoto;
@@ -347,7 +357,11 @@ function renderPhotoStrip() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "thumb";
-    btn.title = photoLabels[idx] === undefined ? "Photo " + (idx + 1) : photoLabels[idx];
+    let label = photoLabels[idx];
+    if (label === undefined) {
+      label = "Photo " + (idx + 1);
+    }
+    btn.title = label;
     const thumb = document.createElement("img");
     thumb.src = img.src;
     thumb.alt = btn.title;
@@ -382,16 +396,18 @@ export async function exportPNG(sizeKey) {
 
 /** Exports all three post sizes, one PNG each. */
 export async function exportAllSizes() {
-  for (const key of Object.keys(EXPORT_SIZES)) {
+  const keys = Object.keys(EXPORT_SIZES);
+  for (let k = 0; k < keys.length; k += 1) {
     // eslint-disable-next-line no-await-in-loop
-    await exportPNG(key);
+    await exportPNG(keys[k]);
   }
   status.textContent = "All 3 sizes saved: 1920 × 1080, 1080 × 1350, 1080 × 1080";
 }
 
 /** Adds user files as photos (read locally only — never uploaded). */
 export async function addUserFiles(fileList) {
-  for (const f of fileList) {
+  for (let fi = 0; fi < fileList.length; fi += 1) {
+    const f = fileList[fi];
     if (f.type.startsWith("image/") === false) {
       continue; // skip non-images
     }
@@ -409,13 +425,11 @@ function panelAt(clientX, clientY) {
   const box = canvas.getBoundingClientRect();
   const x = canvas.width * ((clientX - box.left) / box.width);
   const y = canvas.height * ((clientY - box.top) / box.height);
-  let i = lastPanels.length - 1;
-  while (i >= 0) {
+  for (let i = lastPanels.length - 1; i >= 0; i -= 1) {
     const panel = lastPanels[i];
     if (panel.x <= x && x <= panel.x + panel.w && panel.y <= y && y <= panel.y + panel.h) {
       return i;
     }
-    i -= 1;
   }
   return -1;
 }
@@ -423,7 +437,7 @@ function panelAt(clientX, clientY) {
 /** Wires every control in the editor shell to the state. */
 function bindEditor() {
   document.getElementById("photo").addEventListener("change", (e) => {
-    addUserFiles([...e.target.files]);
+    addUserFiles(Array.from(e.target.files));
     e.target.value = "";
   });
   const dropZone = document.getElementById("dropzone");
@@ -435,9 +449,9 @@ function bindEditor() {
   dropZone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropZone.classList.remove("over");
-    addUserFiles([...e.dataTransfer.files]);
+    addUserFiles(Array.from(e.dataTransfer.files));
   });
-  document.querySelectorAll("#layout-pick button").forEach((b) => {
+  for (const b of document.querySelectorAll("#layout-pick button")) {
     b.addEventListener("click", () => {
       pushUndo();
       state.layout = b.dataset.layout;
@@ -445,30 +459,33 @@ function bindEditor() {
       syncControls();
       paintPreview();
     });
-  }); // layout picker
-  document.querySelectorAll("#grade-pick button").forEach((b) => {
+  } // layout picker
+  for (const b of document.querySelectorAll("#grade-pick button")) {
     b.addEventListener("click", () => {
       pushUndo();
       state.grade = b.dataset.grade;
       syncControls();
       paintPreview();
     });
-  }); // grade picker
-  document.querySelectorAll("#size-pick button").forEach((b) => {
+  } // grade picker
+  for (const b of document.querySelectorAll("#size-pick button")) {
     b.addEventListener("click", () => {
       state.size = b.dataset.size;
       syncControls();
       paintPreview();
     });
-  }); // size picker
-  document.querySelectorAll("#heat-pick button").forEach((b, i) => {
+  } // size picker
+  let hi = 0;
+  for (const b of document.querySelectorAll("#heat-pick button")) {
+    const n = hi;
     b.addEventListener("click", () => {
       pushUndo();
-      state.heat = i + 1;
+      state.heat = n + 1;
       syncControls();
       paintPreview();
     });
-  }); // heat picker
+    hi += 1;
+  } // heat picker
   for (const id of ["title", "subtitle", "place", "tagline"]) {
     document.getElementById(id).addEventListener("input", (e) => {
       state[id] = e.target.value;
@@ -548,7 +565,10 @@ function bindEditor() {
     if (crop === undefined) {
       return; // no panel to zoom
     }
-    const f = e.deltaY < 0 ? 1.08 : 0.93;
+    let f = 0.93;
+    if (e.deltaY < 0) {
+      f = 1.08;
+    }
     crop.zoom = Math.max(1, Math.min(3, crop.zoom * f));
     const zoomInput = document.getElementById("zoom");
     if (zoomInput !== null) {

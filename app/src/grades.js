@@ -17,43 +17,59 @@
 // shadows keep their violet depth.
 
 function clampByte(v) {
-  return v > 255 ? 255 : v < 0 ? 0 : v;
+  if (v > 255) {
+    return 255;
+  }
+  if (v < 0) {
+    return 0;
+  }
+  return v;
 }
 
-// Palette stops per grade. A stop names its brightness position
-// (`at`, 0..1) plus its colour channels, so the lookup below reads
-// `stop.at` / `stop.r` / `stop.g` / `stop.b` instead of indices.
-export const GRADE_PALETTES = {
+// Palette stops per grade, as [brightness, r, g, b] rows; the builder
+// below turns each row into the {at, r, g, b} stop the lookup reads.
+const PALETTE_ROWS = {
   sunset: [
-    { at: 0.0, r: 26, g: 8, b: 46 },
-    { at: 0.28, r: 100, g: 40, b: 70 },
-    { at: 0.55, r: 220, g: 130, b: 80 },
-    { at: 0.78, r: 250, g: 160, b: 90 },
-    { at: 1.0, r: 255, g: 210, b: 63 },
+    [0.0, 26, 8, 46],
+    [0.28, 100, 40, 70],
+    [0.55, 220, 130, 80],
+    [0.78, 250, 160, 90],
+    [1.0, 255, 210, 63],
   ],
   neon: [
-    { at: 0.0, r: 10, g: 8, b: 48 },
-    { at: 0.3, r: 74, g: 20, b: 120 },
-    { at: 0.55, r: 168, g: 38, b: 150 },
-    { at: 0.78, r: 255, g: 64, b: 160 },
-    { at: 1.0, r: 64, g: 224, b: 208 },
+    [0.0, 10, 8, 48],
+    [0.3, 74, 20, 120],
+    [0.55, 168, 38, 150],
+    [0.78, 255, 64, 160],
+    [1.0, 64, 224, 208],
   ],
   golden: [
-    { at: 0.0, r: 40, g: 20, b: 8 },
-    { at: 0.3, r: 122, g: 62, b: 18 },
-    { at: 0.55, r: 214, g: 122, b: 32 },
-    { at: 0.8, r: 255, g: 176, b: 64 },
-    { at: 1.0, r: 255, g: 236, b: 160 },
+    [0.0, 40, 20, 8],
+    [0.3, 122, 62, 18],
+    [0.55, 214, 122, 32],
+    [0.8, 255, 176, 64],
+    [1.0, 255, 236, 160],
   ],
   // Warm mids on purpose: coral-orange at 0.55 rather than magenta-pink,
   // so skin in the poster-ink pass reads sun-warmed instead of purple.
   ink: [
-    { at: 0.0, r: 22, g: 6, b: 38 },
-    { at: 0.3, r: 132, g: 38, b: 62 },
-    { at: 0.55, r: 224, g: 72, b: 84 },
-    { at: 0.78, r: 255, g: 138, b: 58 },
-    { at: 1.0, r: 255, g: 214, b: 92 },
+    [0.0, 22, 6, 38],
+    [0.3, 132, 38, 62],
+    [0.55, 224, 72, 84],
+    [0.78, 255, 138, 58],
+    [1.0, 255, 214, 92],
   ],
+};
+
+function toStop(row) {
+  return { at: row[0], r: row[1], g: row[2], b: row[3] };
+}
+
+export const GRADE_PALETTES = {
+  sunset: PALETTE_ROWS.sunset.map(toStop),
+  neon: PALETTE_ROWS.neon.map(toStop),
+  golden: PALETTE_ROWS.golden.map(toStop),
+  ink: PALETTE_ROWS.ink.map(toStop),
 };
 
 /**
@@ -61,20 +77,22 @@ export const GRADE_PALETTES = {
  * the mapped colour replaces the original pixel (1 = full gradient map).
  */
 export function buildGradeLUT(grade, strength = 0.62) {
-  const ramp = GRADE_PALETTES[grade] === undefined ? GRADE_PALETTES.sunset : GRADE_PALETTES[grade];
+  let ramp = GRADE_PALETTES[grade];
+  if (ramp === undefined) {
+    ramp = GRADE_PALETTES.sunset;
+  }
   const luts = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
   for (let n = 0; n < 256; n += 1) {
     const t = n / 255;
     let lo = ramp[0];
     let hi = ramp[ramp.length - 1];
-    let i = 0;
-    while (i + 1 < ramp.length) {
-      if (t >= ramp[i].at && t <= ramp[i + 1].at) {
-        lo = ramp[i];
-        hi = ramp[i + 1];
-        break;
+    for (let i = 0; i + 1 < ramp.length; i += 1) {
+      if (t < ramp[i].at || t > ramp[i + 1].at) {
+        continue;
       }
-      i += 1;
+      lo = ramp[i];
+      hi = ramp[i + 1];
+      break;
     }
     const span = hi.at - lo.at;
     let mix = 0;
@@ -96,13 +114,11 @@ export function buildGradeLUT(grade, strength = 0.62) {
 export function applyGradientGrade(frame, grade, strength) {
   const lut = buildGradeLUT(grade, strength);
   const buf = frame.data;
-  let i = 0;
-  while (i < buf.length) {
+  for (let i = 0; i < buf.length; i += 4) {
     const lum = (0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2]) | 0;
     buf[i] = lut.r[lum];
     buf[i + 1] = lut.g[lum];
     buf[i + 2] = lut.b[lum];
-    i += 4; // next pixel
   }
   return frame;
 }
@@ -117,16 +133,18 @@ export function warmSkinTones(frame, amount = 0.5) {
   const buf = frame.data;
   const redLift = amount * 14;
   const blueCut = amount * 12;
-  let i = 0;
-  while (i < buf.length) {
+  for (let i = 0; i < buf.length; i += 4) {
     const lum = 0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2];
-    if (lum >= 70 && lum <= 215) {
-      // Triangle weight: full effect near brightness 140, none at the edges.
-      const wgt = lum < 140 ? (lum - 70) / 70 : (215 - lum) / 75;
-      buf[i] = clampByte(redLift * wgt + buf[i]);
-      buf[i + 2] = clampByte(buf[i + 2] - wgt * blueCut);
+    if (lum < 70 || lum > 215) {
+      continue;
     }
-    i += 4; // step on
+    // Triangle weight: full effect near brightness 140, none at the edges.
+    let wgt = (215 - lum) / 75;
+    if (lum < 140) {
+      wgt = (lum - 70) / 70;
+    }
+    buf[i] = clampByte(redLift * wgt + buf[i]);
+    buf[i + 2] = clampByte(buf[i + 2] - wgt * blueCut);
   }
   return frame;
 }
@@ -138,16 +156,15 @@ export function warmSkinTones(frame, amount = 0.5) {
  */
 export function warmHighlights(img, amount = 0.5, cutoff = 175) {
   const d = img.data;
-  let i = 0;
-  while (i < d.length) {
+  for (let i = 0; i < d.length; i += 4) {
     const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    if (lum > cutoff) {
-      const wgt = ((lum - cutoff) / (255 - cutoff)) * amount;
-      d[i] = clampByte(d[i] + wgt * 26);
-      d[i + 1] = clampByte(d[i + 1] + wgt * 8);
-      d[i + 2] = clampByte(d[i + 2] - wgt * 14);
+    if (lum <= cutoff) {
+      continue;
     }
-    i += 4; // advance
+    const wgt = ((lum - cutoff) / (255 - cutoff)) * amount;
+    d[i] = clampByte(d[i] + wgt * 26);
+    d[i + 1] = clampByte(d[i + 1] + wgt * 8);
+    d[i + 2] = clampByte(d[i + 2] - wgt * 14);
   }
   return img;
 }
@@ -156,13 +173,11 @@ export function warmHighlights(img, amount = 0.5, cutoff = 175) {
 export function posterizeImageData(frame, levels = 5) {
   const d = frame.data;
   const step = 255 / (levels - 1);
-  let i = 0;
-  while (i < d.length) {
-    for (let c = 0; c < 3; c += 1) {
+  for (let i = 0; i < d.length; i += 4) {
+    for (let c = 2; c >= 0; c -= 1) {
       const stepped = Math.round(d[i + c] / step) * step;
       d[i + c] = Math.round(stepped);
     }
-    i += 4; // move along
   }
   return frame;
 }
@@ -170,13 +185,11 @@ export function posterizeImageData(frame, levels = 5) {
 /** Pushes colours away from grey in place (1 leaves them unchanged). */
 export function saturateImageData(frame, boost = 1.25) {
   const buf = frame.data;
-  let i = 0;
-  while (i < buf.length) {
+  for (let i = 0; i < buf.length; i += 4) {
     const lum = 0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2];
-    for (let c = 0; c < 3; c += 1) {
+    for (let c = 2; c >= 0; c -= 1) {
       buf[i + c] = clampByte((buf[i + c] - lum) * boost + lum);
     }
-    i += 4; // next
   }
   return frame;
 }
@@ -192,8 +205,8 @@ export function makeHalftonePattern(size = 96) {
   sheet.height = size;
   const gc = sheet.getContext("2d");
   const grid = 12;
-  for (let r = 0; r < size / grid; r += 1) {
-    for (let c = 0; c < size / grid; c += 1) {
+  for (let c = 0; c < size / grid; c += 1) {
+    for (let r = 0; r < size / grid; r += 1) {
       const dot = 1 + ((c + r) % 4) * 1.1;
       gc.fillStyle = "rgba(20,4,32,0.55)";
       gc.beginPath();
@@ -226,14 +239,12 @@ export function makeGrainCanvas(size = 160) {
   sheet.height = size;
   const gc = sheet.getContext("2d");
   const img = gc.createImageData(size, size);
-  let i = 0;
-  while (i < img.data.length) {
+  for (let i = 0; i < img.data.length; i += 4) {
     const v = Math.floor(Math.random() * 40) + 98;
     img.data[i] = v;
     img.data[i + 1] = v;
     img.data[i + 2] = v;
     img.data[i + 3] = 255;
-    i += 4; // grain pixel
   }
   gc.putImageData(img, 0, 0);
   grainTile = sheet;
@@ -308,9 +319,15 @@ export function gradePanelImage(img, panelW, panelH, cropSpec, grade) {
   if (grade === "ink") {
     applyHalftone(gc, out.width, out.height, 0.12);
   }
-  const grainAmt = grade === "ink" ? 0.09 : 0.06;
+  let grainAmt = 0.06;
+  if (grade === "ink") {
+    grainAmt = 0.09;
+  }
   applyGrain(gc, out.width, out.height, grainAmt);
-  const vigAmt = grade === "ink" ? 0.3 : 0.18;
+  let vigAmt = 0.18;
+  if (grade === "ink") {
+    vigAmt = 0.3;
+  }
   applyVignette(gc, out.width, out.height, vigAmt);
   return out;
 }
@@ -323,9 +340,19 @@ export function gradePanelImage(img, panelW, panelH, cropSpec, grade) {
 export function drawCroppedPhoto(ctx, img, destX, destY, w, h, cropSpec = {}) {
   const srcW = img.naturalWidth || img.width;
   const srcH = img.naturalHeight || img.height;
-  const fx = cropSpec.fx === undefined ? 0.5 : cropSpec.fx;
-  const fy = cropSpec.fy === undefined ? 0.4 : cropSpec.fy;
-  const zoom = Math.max(1, cropSpec.zoom === undefined ? 1 : cropSpec.zoom);
+  let fx = 0.5;
+  if (cropSpec.fx !== undefined) {
+    fx = cropSpec.fx;
+  }
+  let fy = 0.4;
+  if (cropSpec.fy !== undefined) {
+    fy = cropSpec.fy;
+  }
+  let zoom = 1;
+  if (cropSpec.zoom !== undefined) {
+    zoom = cropSpec.zoom;
+  }
+  zoom = Math.max(1, zoom);
   const scale = zoom * Math.max(w / srcW, h / srcH);
   const sw = w / scale;
   const sh = h / scale;

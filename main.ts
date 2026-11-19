@@ -1,23 +1,23 @@
-// main.ts — the entry point the grader executes for Palm Heat Cover Studio.
+// main.ts — what the grader runs for the Palm Heat Cover Studio.
 //
-// What gets graded is an offline cover maker in app/: index.html, the
-// ES modules under app/src/, Anton and Pacifico shipped as files, and
-// eight sample photos. Six multi-panel layouts, four grades
-// (gradient-map and poster-ink), an editor where every panel can be
-// cropped and moved, undo/redo, plus PNG export at 1920x1080,
-// 1080x1350, and 1080x1080. screenshots/ holds renders the app
-// painted itself — cover, editor, portrait cover, and square cover,
-// in that order.
+// The graded thing is an offline cover maker living in app/: the
+// index.html shell, the ES modules in app/src/, Anton and Pacifico as
+// bundled font files, and eight sample photos. It offers six
+// multi-panel layouts, four grades (gradient-map looks plus a
+// poster-ink treatment), an editor where every panel can be cropped
+// and moved, undo/redo, and PNG export at 1920x1080, 1080x1350 and
+// 1080x1080. The screenshots/ folder holds four renders the app
+// painted itself — cover, editor, portrait cover, square cover.
 //
-// Plain Node 22, zero dependencies. This script copies app/ and
-// screenshots/ from next to itself into the output directory, then
-// writes dossier.json there — the summary the judge reads — via the
-// vendored make.fun library. That library file must never be touched;
-// it has to stay byte-for-byte as shipped.
+// Plain Node 22, no dependencies at all. This script copies app/ and
+// screenshots/ from beside itself into the output directory, then
+// writes dossier.json there — the summary the judge reads — through
+// the vendored make.fun library. That library file is off limits; it
+// has to stay byte-for-byte as shipped.
 //
-// Run it by hand with `node serve.ts` and http://localhost:8080. Where
-// no grader container exists, MAKEFUN_OUTPUT_DIR takes the place of
-// /output:
+// Try it by hand with `node serve.ts`, then http://localhost:8080.
+// Where there is no grader container, MAKEFUN_OUTPUT_DIR stands in
+// for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
 import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -26,29 +26,32 @@ import { fileURLToPath } from "node:url";
 import { buildDossier } from "./vendor/makefun-app.ts";
 
 const repoRoot = fileURLToPath(new URL("./", import.meta.url));
-const destDir = process.env.MAKEFUN_OUTPUT_DIR !== undefined ? process.env.MAKEFUN_OUTPUT_DIR : "/output";
-const shotsDir = join(repoRoot, "screenshots");
+let destDir = "/output";
+if (process.env.MAKEFUN_OUTPUT_DIR !== undefined) {
+  destDir = process.env.MAKEFUN_OUTPUT_DIR;
+}
 const appDir = join(repoRoot, "app");
+const shotsDir = join(repoRoot, "screenshots");
 
 mkdirSync(destDir, { recursive: true });
-cpSync(appDir, join(destDir, "app"), { recursive: true });
 mkdirSync(join(destDir, "screenshots"), { recursive: true });
+cpSync(appDir, join(destDir, "app"), { recursive: true });
 if (existsSync(shotsDir)) {
   cpSync(shotsDir, join(destDir, "screenshots"), { recursive: true });
 }
 
-// Caps from the scorer's own reference/gate.json. text_max_bytes is the
-// only one that shapes the byte count; the rest mirror refusals the
+// Caps taken from the scorer's own reference/gate.json. Only
+// text_max_bytes shapes the byte count; the rest mirror refusals the
 // scorer itself would make — more than 4 screenshots, or any one over
 // 256 KiB; more than 993 files in app/, or 48 MiB of app files in
 // total; any path under app/ longer than 1000 bytes. app/ is counted
-// next to /output's own 1000-entry cap, its screenshots/ and
-// dossier.json.
+// beside /output's own 1000-entry cap, its screenshots/ and
+// dossier.json. (Second pass: option keys reordered, no value changed.)
 const dossier = buildDossier(destDir, {
-  text_max_bytes: 163840,
-  app_max_files: 993,
   app_max_bytes: 50331648,
+  app_max_files: 993,
   app_path_max_bytes: 1000,
   screenshots: { max: 4, max_bytes: 262144 },
+  text_max_bytes: 163840,
 });
 writeFileSync(join(destDir, "dossier.json"), dossier);
