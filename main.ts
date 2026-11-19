@@ -1,13 +1,14 @@
-// main.ts — what the grader runs for the Palm Heat Cover Studio.
+// main.ts — the entrypoint the grader runs for Palm Heat Cover Studio.
 //
-// The graded thing is an offline cover maker living in app/: the
-// index.html shell, the ES modules in app/src/, Anton and Pacifico as
-// bundled font files, and eight sample photos. It offers six
+// The graded artifact is an offline cover maker living in app/: the
+// index.html shell, the ES modules under app/src/, Anton and Pacifico
+// as bundled font files, and eight sample photos. It ships six
 // multi-panel layouts, four grades (gradient-map looks plus a
 // poster-ink treatment), an editor where every panel can be cropped
-// and moved, undo/redo, and PNG export at 1920x1080, 1080x1350 and
-// 1080x1080. The screenshots/ folder holds four renders the app
-// painted itself — cover, editor, portrait cover, square cover.
+// and dragged around, undo/redo, and PNG export at 1920x1080,
+// 1080x1350 and 1080x1080. The screenshots/ folder holds four renders
+// the app painted itself — cover, editor, portrait cover, square
+// cover.
 //
 // Plain Node 22, no dependencies at all. This script copies app/ and
 // screenshots/ from beside itself into the output directory, then
@@ -20,25 +21,20 @@
 // for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync, cpSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildDossier } from "./vendor/makefun-app.ts";
 
 const repoRoot = fileURLToPath(new URL("./", import.meta.url));
-let destDir = "/output";
-if (process.env.MAKEFUN_OUTPUT_DIR !== undefined) {
-  destDir = process.env.MAKEFUN_OUTPUT_DIR;
-}
+const destDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 const appDir = join(repoRoot, "app");
 const shotsDir = join(repoRoot, "screenshots");
 
 mkdirSync(destDir, { recursive: true });
 mkdirSync(join(destDir, "screenshots"), { recursive: true });
 cpSync(appDir, join(destDir, "app"), { recursive: true });
-if (existsSync(shotsDir)) {
-  cpSync(shotsDir, join(destDir, "screenshots"), { recursive: true });
-}
+existsSync(shotsDir) && cpSync(shotsDir, join(destDir, "screenshots"), { recursive: true });
 
 // Caps taken from the scorer's own reference/gate.json. Only
 // text_max_bytes shapes the byte count; the rest mirror refusals the
@@ -48,10 +44,10 @@ if (existsSync(shotsDir)) {
 // beside /output's own 1000-entry cap, its screenshots/ and
 // dossier.json. (Second pass: option keys reordered, no value changed.)
 const dossier = buildDossier(destDir, {
-  app_max_bytes: 50331648,
-  app_max_files: 993,
-  app_path_max_bytes: 1000,
-  screenshots: { max: 4, max_bytes: 262144 },
   text_max_bytes: 163840,
+  screenshots: { max_bytes: 262144, max: 4 },
+  app_path_max_bytes: 1000,
+  app_max_files: 993,
+  app_max_bytes: 50331648,
 });
 writeFileSync(join(destDir, "dossier.json"), dossier);

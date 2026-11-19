@@ -1,29 +1,29 @@
-# Palm Heat — GTA 6 Cover Studio
+# Palm Heat Cover Studio — a GTA 6 cover maker
 
-A cover maker that runs entirely in your browser: pick a burning-sunset hero photo, arrange it across six multi-panel layouts, paint one of four grades over it, drag every panel where you want it — then take the finished cover home as a PNG.
+Everything runs in the browser, nothing uploads: choose a sunset hero photo, lay it out across six multi-panel cover designs, wash one of four grades over it, drag each panel into place — then export the finished cover as a PNG.
 
 [![make.fun · gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![rank](https://make.fun/badge/gta6-cover-art-01/berachain1/gta6-cover-art-01/rank.svg)](https://make.fun/bounty/gta6-cover-art-01/leaderboard)
 [![reward](https://make.fun/badge/gta6-cover-art-01/berachain1/gta6-cover-art-01/reward.svg)](https://make.fun/bounty/gta6-cover-art-01)
 
-This repo is my entry for the [gta6-cover-art-01 bounty on make.fun](https://make.fun/bounty/gta6-cover-art-01). Want to try make.fun yourself? Join with my referral: https://make.fun/r/tmeqzjwq
+This is my entry for the [gta6-cover-art-01 bounty on make.fun](https://make.fun/bounty/gta6-cover-art-01). Curious about make.fun? Join through my referral link: https://make.fun/r/tmeqzjwq
 
-## Inside the studio
+## What is inside
 
-- Six multi-panel cover layouts, plus four grades (gradient-map looks and a poster-ink treatment)
-- A live editor: crop and move every panel, with undo/redo
+- Six multi-panel cover designs, and four grades — gradient-map looks plus a poster-ink treatment
+- A live editor: crop and move any panel, with undo and redo
 - A sunset hero photo under an Anton title and a Pacifico script subtitle
-- PNG exports at 1920x1080, 1080x1350, and 1080x1080
-- Fully offline, plain Node 22, no dependencies; Anton and Pacifico ship as files, along with eight sample photos
+- PNG exports in 1920x1080, 1080x1350, and 1080x1080
+- Fully offline, plain Node 22, zero dependencies; Anton and Pacifico are bundled as files, together with eight sample photos
 
-## Running it
+## How to run it
 
 ```sh
-node serve.ts # start the studio
+node serve.ts # run the studio
 ```
 
-Then open http://localhost:8080 in your browser.
+Once it is up, open http://localhost:8080 in a browser.
 
-## The screenshot set
+## The screenshots
 
-The `screenshots/` folder holds four renders painted by the app itself: the cover, the editor, the portrait cover, and the square cover.
+The `screenshots/` folder holds four renders the app painted itself: the cover, the editor, the portrait cover, and the square cover.

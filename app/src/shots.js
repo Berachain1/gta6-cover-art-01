@@ -11,24 +11,22 @@
 import { drawCoverGrid } from "./cover.js";
 
 // Post sizes for the cover scene: [width, height] in pixels.
-const POST_DIMS = {
-  landscape: [1920, 1080],
-  portrait: [1080, 1350],
-  square: [1080, 1080],
-};
+const POST_DIMS = new Map([
+  ["portrait", [1080, 1350]],
+  ["square", [1080, 1080]],
+  ["landscape", [1920, 1080]],
+]);
 
 // Query keys copied straight onto state fields, in order.
 const PARAM_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
 function copyParams(params, st) {
-  for (let k = 0; k < PARAM_KEYS.length; k += 1) {
-    const key = PARAM_KEYS[k];
+  for (const key of PARAM_KEYS) {
     const value = params.get(key);
-    if (value === null || value === "") {
-      continue;
+    if (value !== null && value !== "") {
+      st[key] = value;
     }
-    st[key] = value;
   }
   const subtitle = params.get("subtitle");
   if (subtitle !== null) {
@@ -43,8 +41,8 @@ async function loadDisplayFonts() {
   // loading (nothing on the page uses them until the canvas does), and
   // a draw that measures with the fallback font comes out small — so
   // load both faces explicitly before anything is measured or drawn.
-  await document.fonts.load("100px Anton");
   await document.fonts.load("40px Pacifico");
+  await document.fonts.load("100px Anton");
 }
 
 /** Paints the cover scene onto the page canvas at the post size. */
@@ -53,14 +51,8 @@ async function paintCoverScene(params, kit) {
   copyParams(params, kit.state);
   await loadDisplayFonts();
   await kit.loadSamplePhotos();
-  let wanted = kit.state.size;
-  if (wanted === undefined || wanted === "") {
-    wanted = "landscape";
-  }
-  let dims = POST_DIMS[wanted];
-  if (dims === undefined) {
-    dims = POST_DIMS.landscape;
-  }
+  const wanted = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
+  const dims = POST_DIMS.get(wanted) ?? POST_DIMS.get("landscape");
   kit.canvas.width = dims[0];
   kit.canvas.height = dims[1];
   drawCoverGrid(kit.canvas, kit.state, kit.photos);
@@ -86,15 +78,13 @@ const SIZE_BY_SHOT = { cover: null, portrait: "portrait", square: "square" };
 export async function runShot(shot, params, kit) {
   if (shot === "editor") {
     await paintEditorScene(params, kit);
-    return;
-  }
-  if (shot === "cover" || shot === "portrait" || shot === "square") {
+  } else if (shot === "cover" || shot === "portrait" || shot === "square") {
     const preset = SIZE_BY_SHOT[shot];
-    if (preset) {
+    if (preset !== null) {
       kit.state.size = preset;
     }
     await paintCoverScene(params, kit);
-    return;
+  } else {
+    window.__shotReady = true;
   }
-  window.__shotReady = true;
 }

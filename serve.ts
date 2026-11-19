@@ -13,47 +13,37 @@ import { fileURLToPath } from "node:url";
 const rootDir = resolve(fileURLToPath(new URL("./app", import.meta.url)));
 const args = process.argv.slice(2);
 const flagIdx = args.indexOf("--port");
-let requested = 8080;
-if (flagIdx !== -1) {
-  requested = Number(args[flagIdx + 1]);
-}
-let port = 8080;
-if (Number.isInteger(requested) && requested > 0 && requested < 65536) {
-  port = requested;
-}
+const requested = flagIdx === -1 ? 8080 : Number(args[flagIdx + 1]);
+const port = Number.isInteger(requested) && requested > 0 && requested < 65536 ? requested : 8080;
 
-// MIME types by extension, kept as pairs so the table stays sortable.
-const TYPES_BY_EXT = new Map([
-  [".bin", "application/octet-stream"],
-  [".css", "text/css; charset=utf-8"],
-  [".gif", "image/gif"],
-  [".html", "text/html; charset=utf-8"],
-  [".ico", "image/x-icon"],
-  [".jpeg", "image/jpeg"],
-  [".jpg", "image/jpeg"],
-  [".js", "text/javascript; charset=utf-8"],
-  [".json", "application/json; charset=utf-8"],
-  [".mjs", "text/javascript; charset=utf-8"],
-  [".mp3", "audio/mpeg"],
-  [".ogg", "audio/ogg"],
-  [".otf", "font/otf"],
-  [".png", "image/png"],
-  [".svg", "image/svg+xml"],
-  [".ttf", "font/ttf"],
-  [".txt", "text/plain; charset=utf-8"],
-  [".wasm", "application/wasm"],
-  [".wav", "audio/wav"],
-  [".webp", "image/webp"],
-  [".woff", "font/woff"],
-  [".woff2", "font/woff2"],
-]);
+// MIME types by extension, as a plain lookup object.
+const TYPES_BY_EXT = {
+  ".bin": "application/octet-stream",
+  ".css": "text/css; charset=utf-8",
+  ".gif": "image/gif",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".mp3": "audio/mpeg",
+  ".ogg": "audio/ogg",
+  ".otf": "font/otf",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".ttf": "font/ttf",
+  ".txt": "text/plain; charset=utf-8",
+  ".wasm": "application/wasm",
+  ".wav": "audio/wav",
+  ".webp": "image/webp",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
 
 function mimeFor(name) {
-  let found = TYPES_BY_EXT.get(extname(name).toLowerCase());
-  if (found === undefined) {
-    found = "application/octet-stream";
-  }
-  return found;
+  return TYPES_BY_EXT[extname(name).toLowerCase()] ?? "application/octet-stream";
 }
 
 createServer((req, res) => {
@@ -65,34 +55,30 @@ createServer((req, res) => {
     res.writeHead(400).end("bad request");
     return;
   }
-  if (rel.endsWith("/")) {
-    rel = rel + "index.html";
-  }
+  rel = rel.endsWith("/") ? rel + "index.html" : rel;
   const abs = resolve(join(rootDir, normalize(rel)));
   const inside = abs === rootDir || abs.startsWith(rootDir + sep);
-  if (inside === false) {
+  if (!inside) {
     res.writeHead(403).end("forbidden");
     return;
   }
-  let size;
-  let isFile = false;
+  let stat = null;
   try {
-    const stat = statSync(abs);
-    isFile = stat.isFile();
-    size = stat.size;
+    stat = statSync(abs);
   } catch {
-    isFile = false;
+    stat = null;
   }
-  if (isFile === false) {
+  if (stat === null || stat.isFile() === false) {
     res.writeHead(404).end("not found");
     return;
   }
+  const size = stat.size;
   res.writeHead(200, {
-    "cache-control": "no-store",
-    "content-length": size,
     "content-type": mimeFor(abs),
+    "content-length": size,
+    "cache-control": "no-store",
   });
   createReadStream(abs).pipe(res);
 }).listen(port, "127.0.0.1", () => {
-  console.log("serving app/ at http://localhost:" + port);
+  console.log(`serving app/ at http://localhost:${port}`);
 });
