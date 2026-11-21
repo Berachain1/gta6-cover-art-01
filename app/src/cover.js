@@ -1,21 +1,21 @@
-// cover.js — paints the poster.
+// cover.js — the poster painter.
 //
-// drawCoverGrid draws a complete GTA-style cover onto any 2D canvas,
-// whatever its size: a multi-panel photo grid with black gutters, a
-// gradient-map or poster-ink grade on every panel, one huge gradient
-// title block with a neon script subtitle underneath, and the poster
-// furniture (starburst badge, HEAT stars, barcode, ORIGINAL ribbon).
-// exportCoverPNG renders that same art offscreen at the exact post
-// size and returns a PNG blob.
+// drawCoverGrid paints a whole GTA-style cover onto any 2D canvas, at
+// any size: a multi-panel photo grid with black gutters, a gradient-map
+// or poster-ink grade on every panel, one huge gradient title block
+// with a neon script subtitle beneath it, and the poster furniture
+// (starburst badge, HEAT stars, barcode, ORIGINAL ribbon).
+// exportCoverPNG draws that same art offscreen at the exact post size
+// and hands back a PNG blob.
 //
-// The title block has four shapes: 'cell' (the title fills one grid
-// cell), 'band' (a full-width band, used when portrait / square layouts
-// re-flow), 'hero' (a full-width band whose title is stretched to
-// sprawl across the whole width, like the top covers) and 'overlap'
-// (the title floats over the panels). In overlap mode the letters sit
-// on a dark scrim, and the script subtitle gets its own solid dark
-// plate behind it — without that plate the subtitle can land on a
-// bright, busy photo area and vanish, which is exactly what happens
+// The title block comes in four shapes: 'cell' (the title fills a
+// single grid cell), 'band' (a full-width band, used when portrait /
+// square layouts re-flow), 'hero' (a full-width band whose title is
+// stretched to sprawl across the whole width, like the top covers)
+// and 'overlap' (the title floats over the panels). In overlap mode
+// the letters sit on a dark scrim, and the script subtitle gets its own
+// solid dark plate behind it — without that plate the subtitle can land
+// on a bright, busy photo area and vanish, which is exactly what happens
 // on the Tilted layout's lower panels.
 
 import { gradePanelImage, drawCroppedPhoto } from "./grades.js";
@@ -54,9 +54,9 @@ export const GRADES = {
  * `mode` ('cell' | 'band' | 'overlap'); badge is the starburst position.
  */
 export function layoutPanels(w, h, layout) {
-  const gut = (w / 1920) * GUTTER;
-  const tall = w <= h;
-  const panels = [];
+  const gap = (w / 1920) * GUTTER;
+  const isTall = w <= h;
+  const out = [];
 
   // hero-vice: one LARGE hero panel on the left (a big face, about
   // half the cover), a 2-stack middle column and a 3-stack right column
@@ -67,45 +67,45 @@ export function layoutPanels(w, h, layout) {
   // pill straddles the panel/title boundary, and every panel carries a
   // location/time caption chip.
   if (layout === "hero-vice") {
-    const bandH = h * 0.3;
-    const stripH = h * 0.075;
-    const topH = h - bandH - stripH - gut * 4;
-    const titleY = gut + topH + gut;
-    const stripTop = titleY + bandH + gut;
-    const strip = { x: gut, y: stripTop, w: w - gut * 2, h: h - stripTop - gut };
-    if (tall) {
-      const heroH = topH * 0.6;
-      panels.push({ x: gut, y: gut, w: w - gut * 2, h: heroH });
-      const colW = (w - gut * 4) / 3;
-      const rowH = topH - heroH - gut;
+    const band = h * 0.3;
+    const strip = h * 0.075;
+    const top = h - band - strip - 4 * gap;
+    const ty = gap + top + gap;
+    const sy = ty + band + gap;
+    const foot = { x: gap, y: sy, w: w - 2 * gap, h: h - sy - gap };
+    if (isTall) {
+      const hh = top * 0.6;
+      out.push({ x: gap, y: gap, w: w - 2 * gap, h: hh });
+      const cw = (w - 4 * gap) / 3;
+      const rh = top - hh - gap;
       for (let c = 0; c < 3; c += 1) {
-        panels.push({ x: gut + c * (colW + gut), y: gut + heroH + gut, w: colW, h: rowH });
+        out.push({ x: gap + c * (cw + gap), y: gap + hh + gap, w: cw, h: rh });
       }
       return { // hero-vice, tall layout
         badge: { x: 76, y: 76 }, // hero-vice tall
-        panels: panels,
-        strip: strip,
-        title: { x: gut, y: titleY, w: w - gut * 2, h: bandH, mode: "hero" }, // hero-vice tall
+        panels: out,
+        strip: foot,
+        title: { x: gap, y: ty, w: w - 2 * gap, h: band, mode: "hero" }, // hero-vice tall
       };
     }
-    const heroW = w * 0.46 - gut;
-    const midW = w * 0.235 - gut;
-    const rightW = w * 0.305 - gut * 2;
-    const midLeft = gut + heroW + gut;
-    const rightLeft = midLeft + midW + gut;
-    panels.push({ x: gut, y: gut, w: heroW, h: topH });
-    const midH = (topH - gut) / 2;
-    panels.push({ x: midLeft, y: gut, w: midW, h: midH });
-    panels.push({ x: midLeft, y: gut + midH + gut, w: midW, h: midH });
-    const rowH = (topH - gut * 2) / 3;
+    const hw = 0.46 * w - gap;
+    const mw = 0.235 * w - gap;
+    const rw = 0.305 * w - 2 * gap;
+    const ml = gap + hw + gap;
+    const rl = ml + mw + gap;
+    out.push({ x: gap, y: gap, w: hw, h: top });
+    const mh = (top - gap) / 2;
+    out.push({ x: ml, y: gap, w: mw, h: mh });
+    out.push({ x: ml, y: gap + mh + gap, w: mw, h: mh });
+    const rh = (top - 2 * gap) / 3;
     for (let r = 0; r < 3; r += 1) {
-      panels.push({ x: rightLeft, y: gut + r * (rowH + gut), w: rightW, h: rowH });
+      out.push({ x: rl, y: gap + r * (rh + gap), w: rw, h: rh });
     }
     return { // hero-vice, wide layout
-      badge: { x: gut + 64, y: gut + 64 },
-      panels: panels,
-      strip: strip,
-      title: { x: gut, y: titleY, w: w - gut * 2, h: bandH, mode: "hero" }, // hero-vice wide
+      badge: { x: gap + 64, y: gap + 64 },
+      panels: out,
+      strip: foot,
+      title: { x: gap, y: ty, w: w - 2 * gap, h: band, mode: "hero" }, // hero-vice wide
     };
   }
 
@@ -118,145 +118,145 @@ export function layoutPanels(w, h, layout) {
   // panel junction instead of a corner. `wanted` is the top-right
   // anchor of the fisherman panel for the WANTED pill.
   if (layout === "chaos") {
-    const stripH = h * 0.075;
-    const stripTop = h - stripH - gut;
-    const strip = { x: gut, y: stripTop, w: w - gut * 2, h: h - stripTop - gut };
-    let titleH = h * 0.38;
-    if (tall) {
-      titleH = h * 0.34;
+    const strip = h * 0.075;
+    const sy = h - strip - gap;
+    const foot = { x: gap, y: sy, w: w - 2 * gap, h: h - sy - gap };
+    let titleH = 0.38 * h;
+    if (isTall) {
+      titleH = 0.34 * h;
     }
-    const title = { x: 0, y: h * 0.5, w, h: titleH, mode: "chaos" };
-    if (tall) {
-      const heroH = h * 0.44;
-      panels.push({ x: gut, y: gut, w: w - gut * 2, h: heroH, slant: 30 });
-      const colW = (w - gut * 4) / 3;
+    const title = { x: 0, y: 0.5 * h, w, h: titleH, mode: "chaos" };
+    if (isTall) {
+      const hh = 0.44 * h;
+      out.push({ x: gap, y: gap, w: w - 2 * gap, h: hh, slant: 30 });
+      const cw = (w - 4 * gap) / 3;
       // The row runs down to the photo bottom (0.88h) so photos fill
       // behind the title all the way to the strip — a short row left a
       // black scrim void under the title in portrait/square.
-      const rowY = gut + heroH + gut;
-      const rowH = h * 0.88 - rowY;
-      panels.push({ x: gut, y: rowY, w: colW, h: rowH, rot: -0.02 });
-      panels.push({ x: gut + colW + gut, y: rowY, w: colW, h: rowH });
-      panels.push({ x: gut + 2 * (colW + gut), y: rowY, w: colW, h: rowH, rot: 0.025 });
+      const ry = gap + hh + gap;
+      const rh = 0.88 * h - ry;
+      out.push({ x: gap, y: ry, w: cw, h: rh, rot: -0.02 });
+      out.push({ x: gap + cw + gap, y: ry, w: cw, h: rh });
+      out.push({ x: gap + 2 * (cw + gap), y: ry, w: cw, h: rh, rot: 0.025 });
       return { // chaos, tall layout
-        badge: { x: w * 0.66, y: gut + heroH + gut },
-        panels: panels,
-        strip: strip,
+        badge: { x: 0.66 * w, y: gap + hh + gap },
+        panels: out,
+        strip: foot,
         title: title,
-        wanted: { x: gut + 3 * colW + gut * 2, y: rowY },
+        wanted: { x: gap + 3 * cw + 2 * gap, y: ry },
       };
     }
-    const photoBase = h * 0.88;
-    const topH = photoBase - gut;
-    const heroW = w * 0.44 - gut;
-    const midLeft = gut + heroW + gut;
-    const midW = w * 0.24 - gut;
-    const rightLeft = midLeft + midW + gut;
-    const rightW = w - rightLeft - gut;
-    panels.push({ x: gut, y: gut, w: heroW, h: topH, slant: 36 });
-    const midH = (topH - gut) / 2;
-    panels.push({ x: midLeft, y: gut, w: midW, h: midH, rot: 0.02 });
-    panels.push({ x: midLeft, y: gut + midH + gut, w: midW, h: midH, rot: -0.015 });
-    const rowH = (topH - gut * 2) / 3;
-    panels.push({ x: rightLeft, y: gut, w: rightW, h: rowH, rot: -0.03 });
-    panels.push({ x: rightLeft, y: gut + rowH + gut, w: rightW, h: rowH, rot: 0.025 });
-    panels.push({ x: rightLeft, y: gut + 2 * (rowH + gut), w: rightW, h: rowH, rot: -0.02 });
+    const photoBase = 0.88 * h;
+    const top = photoBase - gap;
+    const hw = 0.44 * w - gap;
+    const ml = gap + hw + gap;
+    const mw = 0.24 * w - gap;
+    const rl = ml + mw + gap;
+    const rw = w - rl - gap;
+    out.push({ x: gap, y: gap, w: hw, h: top, slant: 36 });
+    const mh = (top - gap) / 2;
+    out.push({ x: ml, y: gap, w: mw, h: mh, rot: 0.02 });
+    out.push({ x: ml, y: gap + mh + gap, w: mw, h: mh, rot: -0.015 });
+    const rh = (top - 2 * gap) / 3;
+    out.push({ x: rl, y: gap, w: rw, h: rh, rot: -0.03 });
+    out.push({ x: rl, y: gap + rh + gap, w: rw, h: rh, rot: 0.025 });
+    out.push({ x: rl, y: gap + 2 * (rh + gap), w: rw, h: rh, rot: -0.02 });
     return { // chaos, wide layout
       // Starburst on the hero/mid-column junction up where no caption
       // chip lives (the old junction sat on the fisherman's chip), and
       // WANTED on the car panel's top-right — the fisherman panel's
       // top-right is under the ORIGINAL ribbon, which hid the pill.
-      badge: { x: midLeft, y: topH * 0.22 },
-      panels: panels,
-      strip: strip,
+      badge: { x: ml, y: top * 0.22 },
+      panels: out,
+      strip: foot,
       title: title,
-      wanted: { x: rightLeft + rightW, y: gut + rowH + gut },
+      wanted: { x: rl + rw, y: gap + rh + gap },
     };
   }
 
   if (layout === "vice-grid") {
-    if (tall) {
-      const colW = (w - gut * 3) / 2;
-      const rowH = (h * 0.62 - gut * 4) / 3;
+    if (isTall) {
+      const cw = (w - 3 * gap) / 2;
+      const rh = (0.62 * h - 4 * gap) / 3;
       for (let r = 0; r < 3; r += 1) {
         for (let c = 0; c < 2; c += 1) {
-          panels.push({ x: gut + c * (colW + gut), y: gut + r * (rowH + gut), w: colW, h: rowH });
+          out.push({ x: gap + c * (cw + gap), y: gap + r * (rh + gap), w: cw, h: rh });
         }
       }
-      const titleY = gut + 3 * (rowH + gut);
+      const ty = gap + 3 * (rh + gap);
       return { // vice-grid, tall layout
         badge: { x: 76, y: 76 }, // vice-grid tall
-        panels: panels,
-        title: { x: gut, y: titleY, w: w - gut * 2, h: h - titleY - gut, mode: "band" },
+        panels: out,
+        title: { x: gap, y: ty, w: w - 2 * gap, h: h - ty - gap, mode: "band" },
       };
     }
-    const colW = (w - gut * 4) / 3;
-    const rowH = (h - gut * 4) / 3;
+    const cw = (w - 4 * gap) / 3;
+    const rh = (h - 4 * gap) / 3;
     for (let r = 0; r < 3; r += 1) {
       for (let c = 0; c < 3; c += 1) {
         if (r === 1 && c === 1) {
           // centre cell is the title block
         } else {
-          panels.push({ x: gut + c * (colW + gut), y: gut + r * (rowH + gut), w: colW, h: rowH });
+          out.push({ x: gap + c * (cw + gap), y: gap + r * (rh + gap), w: cw, h: rh });
         }
       }
     }
     return { // vice-grid, wide layout
-      badge: { x: gut + 64, y: gut + 64 },
-      panels: panels,
-      title: { x: gut + (colW + gut), y: gut + (rowH + gut), w: colW, h: rowH, mode: "cell" },
+      badge: { x: gap + 64, y: gap + 64 },
+      panels: out,
+      title: { x: gap + (cw + gap), y: gap + (rh + gap), w: cw, h: rh, mode: "cell" },
     };
   }
 
   if (layout === "hero-three") {
-    if (tall) {
-      const heroH = h * 0.44;
-      panels.push({ x: gut, y: gut, w: w - gut * 2, h: heroH });
-      const colW = (w - gut * 4) / 3;
-      const rowH = h * 0.2;
+    if (isTall) {
+      const hh = 0.44 * h;
+      out.push({ x: gap, y: gap, w: w - 2 * gap, h: hh });
+      const cw = (w - 4 * gap) / 3;
+      const rh = 0.2 * h;
       for (let c = 0; c < 3; c += 1) {
-        panels.push({ x: gut + c * (colW + gut), y: heroH + gut * 2, w: colW, h: rowH });
+        out.push({ x: gap + c * (cw + gap), y: hh + 2 * gap, w: cw, h: rh });
       }
-      const titleY = heroH + rowH + gut * 3;
+      const ty = hh + rh + 3 * gap;
       return { // hero-three, tall layout
         badge: { x: 76, y: 76 }, // hero-three tall
-        panels: panels,
-        title: { x: gut, y: titleY, w: w - gut * 2, h: h - titleY - gut, mode: "band" },
+        panels: out,
+        title: { x: gap, y: ty, w: w - 2 * gap, h: h - ty - gap, mode: "band" },
       };
     }
-    const heroW = w * 0.56;
-    panels.push({ x: gut, y: gut, w: heroW - gut, h: h - gut * 2 });
-    const restW = w - heroW - gut * 2;
-    const rowH = (h - gut * 4) / 3;
+    const hw = 0.56 * w;
+    out.push({ x: gap, y: gap, w: hw - gap, h: h - 2 * gap });
+    const restW = w - hw - 2 * gap;
+    const rh = (h - 4 * gap) / 3;
     for (let r = 0; r < 3; r += 1) {
-      panels.push({ x: heroW + gut, y: gut + r * (rowH + gut), w: restW, h: rowH });
+      out.push({ x: hw + gap, y: gap + r * (rh + gap), w: restW, h: rh });
     }
     return { // hero-three, wide layout
       badge: { x: 78, y: 54 },
-      panels: panels,
-      title: { x: gut, y: h * 0.66, w: w - gut * 2, h: h * 0.34 - gut, mode: "overlap" },
+      panels: out,
+      title: { x: gap, y: 0.66 * h, w: w - 2 * gap, h: 0.34 * h - gap, mode: "overlap" },
     };
   }
 
   if (layout === "tilted") {
-    if (tall) {
-      const heroH = h * 0.4;
-      panels.push({ x: gut, y: gut, w: w - gut * 2, h: heroH, slant: 40 });
-      const colW = (w - gut * 3) / 2;
-      const rowH = h * 0.24;
-      panels.push({ x: gut, y: heroH + gut * 2, w: colW, h: rowH, slant: -30 });
-      panels.push({ x: gut + colW + gut, y: heroH + gut * 2, w: colW, h: rowH, slant: 30 });
-      const titleY = heroH + rowH + gut * 3;
+    if (isTall) {
+      const hh = 0.4 * h;
+      out.push({ x: gap, y: gap, w: w - 2 * gap, h: hh, slant: 40 });
+      const cw = (w - 3 * gap) / 2;
+      const rh = 0.24 * h;
+      out.push({ x: gap, y: hh + 2 * gap, w: cw, h: rh, slant: -30 });
+      out.push({ x: gap + cw + gap, y: hh + 2 * gap, w: cw, h: rh, slant: 30 });
+      const ty = hh + rh + 3 * gap;
       return { // tilted, tall layout
         badge: { x: 76, y: 76 }, // tilted tall
-        panels: panels,
-        title: { x: gut, y: titleY, w: w - gut * 2, h: h - titleY - gut, mode: "band" },
+        panels: out,
+        title: { x: gap, y: ty, w: w - 2 * gap, h: h - ty - gap, mode: "band" },
       };
     }
-    const heroW = w * 0.5;
-    panels.push({ x: gut, y: gut, w: heroW, h: h * 0.62, slant: 46 });
-    panels.push({ x: heroW + gut, y: gut, w: w - heroW - gut * 2, h: h * 0.62, slant: -46 });
-    const botW = (w - gut * 4) / 3;
+    const hw = 0.5 * w;
+    out.push({ x: gap, y: gap, w: hw, h: 0.62 * h, slant: 46 });
+    out.push({ x: hw + gap, y: gap, w: w - hw - 2 * gap, h: 0.62 * h, slant: -46 });
+    const botW = (w - 4 * gap) / 3;
     for (let c = 0; c < 3; c += 1) {
       let slant = -26;
       if (c === 1) {
@@ -264,65 +264,65 @@ export function layoutPanels(w, h, layout) {
       } else if (c === 0) {
         slant = 26;
       }
-      panels.push({ x: gut + c * (botW + gut), y: h * 0.62 + gut, w: botW, h: h * 0.38 - gut * 2, slant });
+      out.push({ x: gap + c * (botW + gap), y: 0.62 * h + gap, w: botW, h: 0.38 * h - 2 * gap, slant });
     }
     return { // tilted, wide layout
-      badge: { x: gut + 64, y: gut + 64 },
-      panels: panels,
-      title: { x: w * 0.22, y: h * 0.42, w: w * 0.56, h: h * 0.3, mode: "overlap" },
+      badge: { x: gap + 64, y: gap + 64 },
+      panels: out,
+      title: { x: 0.22 * w, y: 0.42 * h, w: 0.56 * w, h: 0.3 * h, mode: "overlap" },
     };
   }
 
   // full-bleed: a single photo fills the frame, with snapshots floating on top.
-  if (tall) {
-    panels.push({ x: 0, y: 0, w, h: h * 0.72 });
-    panels.push({ x: gut, y: h * 0.52, w: w * 0.42, h: h * 0.2, snap: true });
+  if (isTall) {
+    out.push({ x: 0, y: 0, w, h: 0.72 * h });
+    out.push({ x: gap, y: 0.52 * h, w: 0.42 * w, h: 0.2 * h, snap: true });
     return { // full-bleed, tall layout
       badge: { x: 76, y: 76 }, // full-bleed tall
-      panels: panels,
-      title: { x: 0, y: h * 0.72, w, h: h * 0.28, mode: "band" },
+      panels: out,
+      title: { x: 0, y: 0.72 * h, w, h: 0.28 * h, mode: "band" },
     };
   }
-  panels.push({ x: 0, y: 0, w, h });
-  panels.push({ x: w * 0.66, y: gut * 2, w: w * 0.3, h: h * 0.34, snap: true });
-  panels.push({ x: w * 0.04, y: h * 0.06, w: w * 0.24, h: h * 0.3, snap: true });
+  out.push({ x: 0, y: 0, w, h });
+  out.push({ x: 0.66 * w, y: 2 * gap, w: 0.3 * w, h: 0.34 * h, snap: true });
+  out.push({ x: 0.04 * w, y: 0.06 * h, w: 0.24 * w, h: 0.3 * h, snap: true });
   return { // full-bleed, wide layout
-    badge: { x: w * 0.5, y: 60 },
-    panels: panels,
-    title: { x: 0, y: h * 0.6, w, h: h * 0.4, mode: "overlap" },
+    badge: { x: 0.5 * w, y: 60 },
+    panels: out,
+    title: { x: 0, y: 0.6 * h, w, h: 0.4 * h, mode: "overlap" },
   };
 }
 
 /** The Anton size that fits `text` inside `limit`, shrinking 2 px at a time. */
 export function fitTitleFont(ctx, text, limit, cap, face = "Anton") {
-  let size = cap;
-  ctx.font = size + "px " + face + ", sans-serif";
-  while (ctx.measureText(text).width > limit && size > 20) {
-    size -= 2;
-    ctx.font = size + "px " + face + ", sans-serif";
+  let s = cap;
+  ctx.font = s + "px " + face + ", sans-serif";
+  while (ctx.measureText(text).width > limit && s > 20) {
+    s -= 2;
+    ctx.font = s + "px " + face + ", sans-serif";
   }
-  return size;
+  return s;
 }
 
 /** How many photo panels a layout has. */
 export function panelCount(layout) {
-  const counts = { chaos: 6, "hero-vice": 6, "vice-grid": 8, "hero-three": 4, tilted: 5, "full-bleed": 3 };
-  return counts[layout] ?? 8;
+  const table = { chaos: 6, "hero-vice": 6, "vice-grid": 8, "hero-three": 4, tilted: 5, "full-bleed": 3 };
+  return table[layout] ?? 8;
 }
 
 /** A filled rounded-rectangle path (avoids any ctx.roundRect dependency). */
 export function roundRectPath(ctx, x, y, w, h, corner) {
-  const rad = Math.min(corner, h / 2, w / 2);
+  const r = Math.min(corner, h / 2, w / 2);
   ctx.beginPath();
-  ctx.moveTo(x + rad, y);
-  ctx.lineTo(x + w - rad, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
-  ctx.lineTo(x + w, y + h - rad);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
-  ctx.lineTo(x + rad, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
-  ctx.lineTo(x, y + rad);
-  ctx.quadraticCurveTo(x, y, x + rad, y);
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
 }
 
@@ -331,12 +331,12 @@ export function drawStarburstBadge(ctx, cx, cy, r, line1, line2) {
   ctx.save(); // starburst
   ctx.translate(cx, cy);
   ctx.beginPath();
-  const points = 14;
-  for (let i = 0; i < points * 2; i += 1) {
-    const a = (i / points - 0.5) * Math.PI;
-    const radius = i % 2 === 0 ? r : r * 0.78;
-    const px = Math.cos(a) * radius;
-    const py = Math.sin(a) * radius;
+  const spikes = 14;
+  for (let i = 0; i < spikes * 2; i += 1) {
+    const ang = (i / spikes - 0.5) * Math.PI;
+    const rad = i % 2 === 0 ? r : 0.78 * r;
+    const px = Math.cos(ang) * rad;
+    const py = Math.sin(ang) * rad;
     if (i === 0) {
       ctx.moveTo(px, py);
     } else {
@@ -352,10 +352,10 @@ export function drawStarburstBadge(ctx, cx, cy, r, line1, line2) {
   ctx.fillStyle = "#14041f";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = r * 0.42 + "px Anton, sans-serif";
-  ctx.fillText(line1, 0, r * -0.16);
-  ctx.font = r * 0.26 + "px Anton, sans-serif";
-  ctx.fillText(line2, 0, r * 0.24);
+  ctx.font = 0.42 * r + "px Anton, sans-serif";
+  ctx.fillText(line1, 0, -0.16 * r);
+  ctx.font = 0.26 * r + "px Anton, sans-serif";
+  ctx.fillText(line2, 0, 0.24 * r);
   ctx.restore(); // starburst done
 }
 
@@ -365,15 +365,15 @@ export function drawHeatStars(ctx, cx, y, size, heat, fill = "#ffd23f", stroke =
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = size + "px sans-serif";
-  const pitch = size * 1.15;
-  const firstX = cx - 2 * pitch;
+  const step = 1.15 * size;
+  const x0 = cx - 2 * step;
   for (let i = 0; i < 5; i += 1) {
     ctx.fillStyle = i < heat ? fill : "rgba(255,255,255,0.28)";
     ctx.strokeStyle = stroke;
     ctx.lineWidth = Math.max(1, 0.06 * size);
-    const sx = firstX + i * pitch;
-    ctx.strokeText("★", sx, y);
-    ctx.fillText("★", sx, y);
+    const x = x0 + i * step;
+    ctx.strokeText("★", x, y);
+    ctx.fillText("★", x, y);
   }
   ctx.restore(); // heat stars done
 }
@@ -383,17 +383,17 @@ export function drawBarcode(ctx, x, y, w, h, seedText) {
   ctx.save(); // barcode
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(x, y, w, h);
-  let seed = 7;
-  for (let si = 0; si < seedText.length; si += 1) {
-    seed = (seedText.charCodeAt(si) + 31 * seed) % 997;
+  let s = 7;
+  for (let k = 0; k < seedText.length; k += 1) {
+    s = (seedText.charCodeAt(k) + 31 * s) % 997;
   }
-  let barW = 0;
+  let bw = 0;
   ctx.fillStyle = "#14041f";
-  for (let cursorX = x + w * 0.04, rnd = seed; cursorX < x + w * 0.96; cursorX += barW + w / 220) {
-    rnd = (rnd * 16807) % 2147483647;
-    barW = 1 + (rnd % 4) * (w / 220);
-    if (rnd % 3 !== 0) {
-      ctx.fillRect(cursorX, y + h * 0.08, barW, h * 0.72);
+  for (let cx = x + 0.04 * w, r = s; cx < x + 0.96 * w; cx += bw + w / 220) {
+    r = (r * 16807) % 2147483647;
+    bw = 1 + (r % 4) * (w / 220);
+    if (r % 3 !== 0) {
+      ctx.fillRect(cx, y + 0.08 * h, bw, 0.72 * h);
     }
   }
   ctx.restore(); // barcode done
@@ -412,13 +412,13 @@ export function drawPalmSilhouette(ctx, x, y, scale, color) {
   ctx.moveTo(0, 0);
   ctx.quadraticCurveTo(14, -60, 4, -110);
   ctx.stroke();
-  for (let f = 0; f < 7; f += 1) {
-    const angle = (52 * f - 160) * (Math.PI / 180);
+  for (let k = 0; k < 7; k += 1) {
+    const a = (52 * k - 160) * (Math.PI / 180);
     ctx.beginPath();
     ctx.moveTo(4, -110);
     ctx.quadraticCurveTo(
-      Math.cos(angle) * 55 + 4, Math.sin(angle) * 42 - 110,
-      Math.cos(angle) * 88 + 4, Math.sin(angle) * 78 - 110,
+      Math.cos(a) * 55 + 4, Math.sin(a) * 42 - 110,
+      Math.cos(a) * 88 + 4, Math.sin(a) * 78 - 110,
     );
     ctx.stroke();
   }
@@ -433,14 +433,14 @@ export function drawPalmSilhouette(ctx, x, y, scale, color) {
 function drawPillRight(ctx, edgeX, top, text, bg, fg, fs, opt = {}) {
   ctx.save(); // pill
   ctx.font = fs + "px Anton, sans-serif";
-  const textW = ctx.measureText(text).width;
-  const padW = fs * 0.75;
-  const pillW = textW + 2 * padW;
-  const pillH = fs * 1.75;
-  ctx.translate(edgeX - pillW * 0.5, top + pillH * 0.5);
+  const tw = ctx.measureText(text).width;
+  const pad = 0.75 * fs;
+  const pw = tw + 2 * pad;
+  const ph = 1.75 * fs;
+  ctx.translate(edgeX - 0.5 * pw, top + 0.5 * ph);
   opt.rot !== undefined && ctx.rotate(opt.rot);
-  const corner = opt.square ? Math.max(3, 0.15 * fs) : pillH * 0.5;
-  roundRectPath(ctx, pillW * -0.5, pillH * -0.5, pillW, pillH, corner);
+  const rad = opt.square ? Math.max(3, 0.15 * fs) : 0.5 * ph;
+  roundRectPath(ctx, -0.5 * pw, -0.5 * ph, pw, ph, rad);
   ctx.fillStyle = bg;
   ctx.fill();
   if (opt.stroke) {
@@ -451,9 +451,9 @@ function drawPillRight(ctx, edgeX, top, text, bg, fg, fs, opt = {}) {
   ctx.fillStyle = fg;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 0, fs * 0.05);
+  ctx.fillText(text, 0, 0.05 * fs);
   ctx.restore(); // pill done
-  return edgeX - pillW;
+  return edgeX - pw;
 }
 
 /**
@@ -490,7 +490,7 @@ export function drawTitleBlock(ctx, rect, state) {
       ctx.globalAlpha = 0.55;
       ctx.fillStyle = "#ffe9a8";
       ctx.beginPath();
-      ctx.arc(x + w * 0.84, y + h * 0.2, Math.min(w, h) * 0.13, 0, 2 * Math.PI);
+      ctx.arc(x + 0.84 * w, y + 0.2 * h, 0.13 * Math.min(w, h), 0, 2 * Math.PI);
       ctx.fill();
       ctx.globalAlpha = 1;
     }
@@ -510,23 +510,23 @@ export function drawTitleBlock(ctx, rect, state) {
     ctx.fillRect(x, y, w, h);
   }
 
-  const pad = w * 0.04;
-  const cx = x + w / 2;
-  let titleText = "PALM HEAT";
+  const inset = 0.04 * w;
+  const midX = x + w / 2;
+  let title = "PALM HEAT";
   if (state.title !== undefined && state.title !== "") {
-    titleText = state.title.toUpperCase();
+    title = state.title.toUpperCase();
   }
-  let subtitle = "";
+  let sub = "";
   if (state.subtitle !== undefined) {
-    subtitle = state.subtitle;
+    sub = state.subtitle;
   }
-  let placeName = "CORAL BAY";
+  let place = "CORAL BAY";
   if (state.place !== undefined && state.place !== "") {
-    placeName = state.place.toUpperCase();
+    place = state.place.toUpperCase();
   }
-  let taglineText = "";
+  let tag = "";
   if (state.tagline !== undefined) {
-    taglineText = state.tagline.toUpperCase();
+    tag = state.tagline.toUpperCase();
   }
 
   // Eyebrow: WELCOME TO · PLACE. Hero and chaos mode skip it — the
@@ -535,11 +535,11 @@ export function drawTitleBlock(ctx, rect, state) {
   if (mode !== "hero" && mode !== "chaos") {
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    const browSize = Math.max(13, Math.min(w * 0.045, h * 0.11));
-    ctx.font = browSize + "px Anton, sans-serif";
-    const browColor = mode === "overlap" ? "#ffd23f" : "#fff3c4";
-    ctx.fillStyle = browColor;
-    ctx.fillText("★  WELCOME TO " + placeName + "  ★", cx, y + h * 0.12);
+    const brow = Math.max(13, Math.min(0.045 * w, 0.11 * h));
+    ctx.font = brow + "px Anton, sans-serif";
+    const browCol = mode === "overlap" ? "#ffd23f" : "#fff3c4";
+    ctx.fillStyle = browCol;
+    ctx.fillText("★  WELCOME TO " + place + "  ★", midX, y + 0.12 * h);
   }
 
   // Main title — gradient fill, thick black outline, hard shadow.
@@ -554,19 +554,19 @@ export function drawTitleBlock(ctx, rect, state) {
   // PALM HEAT would otherwise occupy only half the band. Chaos
   // sprawls a touch wider (0.88) and taller (0.72) than hero — its
   // title crashes over photos.
-  const capSize = mode === "chaos" ? h * 0.72 : mode === "hero" ? h * 0.66 : Math.min(h * 0.52, w * 0.52);
-  const px = fitTitleFont(ctx, titleText, w - 2 * pad, capSize);
-  const frac = mode === "hero" ? 0.58 : mode === "chaos" ? 0.52 : subtitle !== "" ? 0.6 : 0.64;
-  const titleY = y + frac * h;
-  const fill = ctx.createLinearGradient(0, titleY - px, 0, titleY + px * 0.12);
+  const cap = mode === "chaos" ? 0.72 * h : mode === "hero" ? 0.66 * h : Math.min(0.52 * h, 0.52 * w);
+  const size = fitTitleFont(ctx, title, w - 2 * inset, cap);
+  const yFrac = mode === "hero" ? 0.58 : mode === "chaos" ? 0.52 : sub !== "" ? 0.6 : 0.64;
+  const titleY = y + yFrac * h;
+  const fill = ctx.createLinearGradient(0, titleY - size, 0, titleY + 0.12 * size);
   const titleStops = [{ at: 1, color: "#ff2e7e" }, { at: 0.5, color: "#ff9a2f" }, { at: 0, color: "#ffe14d" }];
   for (const stop of titleStops) {
     fill.addColorStop(stop.at, stop.color);
   }
-  ctx.font = px + "px Anton, sans-serif";
+  ctx.font = size + "px Anton, sans-serif";
   ctx.lineJoin = "round";
-  const outlineW = mode === "hero" ? 0.13 : 0.11;
-  ctx.lineWidth = Math.max(3, px * outlineW);
+  const ow = mode === "hero" ? 0.13 : 0.11;
+  ctx.lineWidth = Math.max(3, size * ow);
   ctx.strokeStyle = "#14041f";
   // Hero and chaos mode: a magenta drop shadow behind the black
   // outline, the way the top covers' titles lift off the band (or off
@@ -575,55 +575,55 @@ export function drawTitleBlock(ctx, rect, state) {
     // v5: deeper than v4 (0.55/0.10/0.06) — #1's title shadow sits
     // visibly deeper than ours; the title stays fully readable.
     ctx.shadowColor = "rgba(255,46,126,0.8)";
-    ctx.shadowBlur = px * 0.14;
-    ctx.shadowOffsetY = px * 0.08;
+    ctx.shadowBlur = 0.14 * size;
+    ctx.shadowOffsetY = 0.08 * size;
   } else {
     ctx.shadowColor = "rgba(20,4,31,0.65)";
-    ctx.shadowBlur = px * 0.08;
-    ctx.shadowOffsetY = px * 0.05;
+    ctx.shadowBlur = 0.08 * size;
+    ctx.shadowOffsetY = 0.05 * size;
   }
-  let stretch = 1;
-  let tracking = 0;
+  let sx = 1;
+  let track = 0;
   if (mode === "hero" || mode === "chaos") {
-    const rawW = ctx.measureText(titleText).width;
-    const goalFrac = mode === "chaos" ? 0.88 : 0.85;
-    const goalW = w * goalFrac;
-    stretch = Math.min(1.15, goalW / Math.max(1, rawW));
-    tracking = Math.max(0, (goalW - rawW * stretch) / Math.max(1, titleText.length - 1));
+    const w0 = ctx.measureText(title).width;
+    const gf = mode === "chaos" ? 0.88 : 0.85;
+    const gw = w * gf;
+    sx = Math.min(1.15, gw / Math.max(1, w0));
+    track = Math.max(0, (gw - w0 * sx) / Math.max(1, title.length - 1));
     ctx.save(); // title stretch
-    ctx.translate(cx, 0);
-    ctx.scale(stretch, 1);
-    ctx.translate(-cx, 0);
-    ctx.letterSpacing = tracking + "px";
+    ctx.translate(midX, 0);
+    ctx.scale(sx, 1);
+    ctx.translate(-midX, 0);
+    ctx.letterSpacing = track + "px";
   }
   // Hero and chaos mode with a multi-word title: draw word by word, so
   // the gap between words is a controlled 2x tracking, not the space
   // advance plus tracking (which leaves a canyon between PALM and HEAT).
-  if ((mode === "hero" || mode === "chaos") && titleText.indexOf(" ") !== -1) {
-    const words = titleText.split(" ");
-    const wordWidths = words.map((word) => ctx.measureText(word).width);
+  if ((mode === "hero" || mode === "chaos") && title.indexOf(" ") !== -1) {
+    const words = title.split(" ");
+    const wws = words.map((word) => ctx.measureText(word).width);
     // Word gap is just the space advance plus a little tracking — the
     // 2x tracking gap left a canyon between PALM and HEAT; #2's
     // SUNSET HEIST sits tight, about a third of a letter wide.
-    const wordGap = 0.1 * px + tracking;
-    const totalW = wordWidths.reduce((sum, ww) => sum + ww, (words.length - 1) * wordGap);
+    const gap = 0.1 * size + track;
+    const total = wws.reduce((sum, ww) => sum + ww, (words.length - 1) * gap);
     ctx.textAlign = "left";
-    let cursor = cx - totalW / 2;
+    let cur = midX - total / 2;
     words.forEach((word, i) => {
-      ctx.strokeText(word, cursor, titleY);
-      cursor += wordWidths[i] + wordGap;
+      ctx.strokeText(word, cur, titleY);
+      cur += wws[i] + gap;
     });
     ctx.fillStyle = fill;
-    cursor = cx - totalW / 2;
+    cur = midX - total / 2;
     words.forEach((word, i) => {
-      ctx.fillText(word, cursor, titleY);
-      cursor += wordWidths[i] + wordGap;
+      ctx.fillText(word, cur, titleY);
+      cur += wws[i] + gap;
     });
     ctx.textAlign = "center";
   } else {
-    ctx.strokeText(titleText, cx, titleY);
+    ctx.strokeText(title, midX, titleY);
     ctx.fillStyle = fill;
-    ctx.fillText(titleText, cx, titleY);
+    ctx.fillText(title, midX, titleY);
   }
   if (mode === "hero" || mode === "chaos") {
     ctx.restore(); // title stretch done
@@ -637,22 +637,22 @@ export function drawTitleBlock(ctx, rect, state) {
   // it never sits directly on a busy photo. Chaos mode skips the
   // plate: its subtitle sits on the dark end of the scrim like
   // do-tinh's "Neon Tide", white with a hot-pink glow.
-  if (subtitle !== "") {
-    const subPx = mode === "chaos" ? Math.min(w * 0.075, h * 0.17, px * 0.38) : mode === "hero" ? Math.min(w * 0.08, h * 0.17, px * 0.4) : Math.min(w * 0.085, h * 0.17, px * 0.42);
-    const subFrac = mode === "hero" ? 0.85 : 0.8;
-    const subTop = y + h * subFrac;
-    ctx.font = subPx + "px Pacifico, cursive";
+  if (sub !== "") {
+    const spx = mode === "chaos" ? Math.min(0.075 * w, 0.17 * h, 0.38 * size) : mode === "hero" ? Math.min(0.08 * w, 0.17 * h, 0.4 * size) : Math.min(0.085 * w, 0.17 * h, 0.42 * size);
+    const sf = mode === "hero" ? 0.85 : 0.8;
+    const sy = y + h * sf;
+    ctx.font = spx + "px Pacifico, cursive";
     if (mode === "overlap") {
-      const plateW = Math.min(ctx.measureText(subtitle).width + subPx * 1.1, w * 0.92);
-      roundRectPath(ctx, cx - plateW / 2, subTop - subPx * 0.72, plateW, subPx * 1.15, subPx * 0.32);
+      const plateW = Math.min(ctx.measureText(sub).width + 1.1 * spx, 0.92 * w);
+      roundRectPath(ctx, midX - plateW / 2, sy - 0.72 * spx, plateW, 1.15 * spx, 0.32 * spx);
       ctx.fillStyle = "rgba(16,2,26,0.82)";
       ctx.fill();
     }
     const subColor = mode === "chaos" ? "#ff5da2" : "#ffffff";
     ctx.fillStyle = subColor;
     ctx.shadowColor = "#ff2e9e";
-    ctx.shadowBlur = subPx * 0.5;
-    ctx.fillText(subtitle, cx, subTop);
+    ctx.shadowBlur = 0.5 * spx;
+    ctx.fillText(sub, midX, sy);
     ctx.shadowBlur = 0;
   }
 
@@ -660,17 +660,17 @@ export function drawTitleBlock(ctx, rect, state) {
   // mode (the title zone is full — title + script fill it); other
   // modes keep them inside the block as before.
   if (mode !== "hero" && mode !== "chaos") {
-    const tagTop = y + h * (subtitle !== "" ? 0.9 : 0.85);
-    if (taglineText !== "") {
-      const tagPx = Math.max(11, Math.min(h * 0.07, w * 0.032));
-      ctx.font = tagPx + "px Anton, sans-serif";
+    const ty = y + h * (sub !== "" ? 0.9 : 0.85);
+    if (tag !== "") {
+      const tpx = Math.max(11, Math.min(0.07 * h, 0.032 * w));
+      ctx.font = tpx + "px Anton, sans-serif";
       ctx.fillStyle = "#ffffff";
-      ctx.fillText(taglineText, cx, tagTop);
+      ctx.fillText(tag, midX, ty);
     }
     // Gold stars vanish on the orange hero band, so the hero band gets
     // dark stars with a light outline instead.
-    const heat = state.heat ?? 5;
-    drawHeatStars(ctx, cx, y + h * 0.965, Math.max(12, h * 0.07), heat, "#ffd23f", "#14041f");
+    const hv = state.heat ?? 5;
+    drawHeatStars(ctx, midX, y + 0.965 * h, Math.max(12, 0.07 * h), hv, "#ffd23f", "#14041f");
   }
   ctx.restore(); // title block done
 }
@@ -680,14 +680,14 @@ export function drawTitleBlock(ctx, rect, state) {
 // and a barcode — the foot furniture every top-5 cover has.
 export function drawBottomStrip(ctx, rect, state) {
   const { x, y, w, h } = rect;
-  const scale = w / 1920;
+  const sc = w / 1920;
   ctx.save(); // bottom strip
-  const wash = ctx.createLinearGradient(x, y, x + w, y);
-  const washStops = [{ at: 1, color: "#ff2e7e" }, { at: 0.5, color: "#a01e68" }, { at: 0, color: "#ff2e7e" }];
-  for (const stop of washStops) {
-    wash.addColorStop(stop.at, stop.color);
+  const bg = ctx.createLinearGradient(x, y, x + w, y);
+  const stops = [{ at: 1, color: "#ff2e7e" }, { at: 0.5, color: "#a01e68" }, { at: 0, color: "#ff2e7e" }];
+  for (const stop of stops) {
+    bg.addColorStop(stop.at, stop.color);
   }
-  ctx.fillStyle = wash;
+  ctx.fillStyle = bg;
   ctx.fillRect(x, y, w, h);
   // Palm silhouettes, clipped to the strip so fronds bleed off its edge
   // the way the top covers' palm strips do.
@@ -695,52 +695,52 @@ export function drawBottomStrip(ctx, rect, state) {
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  const palmScale = (h * 0.72) / 110;
-  drawPalmSilhouette(ctx, x + w * 0.02, y + h - 2, palmScale, "rgba(20,4,31,0.9)");
-  drawPalmSilhouette(ctx, x + w * 0.055, y + h - 2, palmScale * 0.8, "rgba(20,4,31,0.9)");
-  drawPalmSilhouette(ctx, x + w * 0.09, y + h - 2, palmScale * 0.6, "rgba(20,4,31,0.9)");
-  drawPalmSilhouette(ctx, x + w * 0.885, y + h - 2, palmScale * 0.7, "rgba(20,4,31,0.9)");
+  const ps = (0.72 * h) / 110;
+  drawPalmSilhouette(ctx, x + 0.02 * w, y + h - 2, ps, "rgba(20,4,31,0.9)");
+  drawPalmSilhouette(ctx, x + 0.055 * w, y + h - 2, 0.8 * ps, "rgba(20,4,31,0.9)");
+  drawPalmSilhouette(ctx, x + 0.09 * w, y + h - 2, 0.6 * ps, "rgba(20,4,31,0.9)");
+  drawPalmSilhouette(ctx, x + 0.885 * w, y + h - 2, 0.7 * ps, "rgba(20,4,31,0.9)");
   ctx.restore(); // strip clip done
   // Tagline, centred, with the fine print under it.
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  const tagPx = Math.max(12, h * 0.3);
-  ctx.font = tagPx + "px Anton, sans-serif";
+  const tpx = Math.max(12, 0.3 * h);
+  ctx.font = tpx + "px Anton, sans-serif";
   ctx.fillStyle = "#ffffff";
-  const stripTag = state.tagline ?? "";
-  ctx.fillText(stripTag, x + w * 0.5, y + h * 0.42);
-  const fineLong = "PALM HEAT — A PALM HEAT COVER STUDIO PICTURE · STARRING YOU · SHOT ON YOUR OWN CAMERA · GRADED BY HAND · LETTERING AND SEAL ORIGINAL";
-  const fineBrief = "PALM HEAT — A PALM HEAT COVER STUDIO PICTURE · STARRING YOU";
+  const tag = state.tagline ?? "";
+  ctx.fillText(tag, x + 0.5 * w, y + 0.42 * h);
+  const long = "PALM HEAT — A PALM HEAT COVER STUDIO PICTURE · STARRING YOU · SHOT ON YOUR OWN CAMERA · GRADED BY HAND · LETTERING AND SEAL ORIGINAL";
+  const short = "PALM HEAT — A PALM HEAT COVER STUDIO PICTURE · STARRING YOU";
   // The fine print must fit between the palms and the barcode: on narrow
   // covers (portrait/square) the full line overflows both edges, so use
   // the short line and shrink until it fits the middle 70% of the strip.
-  const line = ctx.measureText(fineLong).width > w * 0.7 ? fineBrief : fineLong;
-  let finePx = Math.max(8, h * 0.14);
-  ctx.font = finePx + "px sans-serif";
-  while (finePx > 7 && ctx.measureText(line).width > w * 0.7) {
-    finePx -= 1;
-    ctx.font = finePx + "px sans-serif";
+  const txt = ctx.measureText(long).width > 0.7 * w ? short : long;
+  let fpx = Math.max(8, 0.14 * h);
+  ctx.font = fpx + "px sans-serif";
+  while (fpx > 7 && ctx.measureText(txt).width > 0.7 * w) {
+    fpx -= 1;
+    ctx.font = fpx + "px sans-serif";
   }
   ctx.fillStyle = "rgba(255,255,255,0.82)";
-  ctx.fillText(line, x + w * 0.5, y + h * 0.78);
+  ctx.fillText(txt, x + 0.5 * w, y + 0.78 * h);
   // Barcode, far right.
-  const codeW = scale * 88;
-  const codeH = h * 0.62;
-  const codeX = x + w - codeW - scale * 10;
-  const codeY = y + (h - codeH) / 2;
+  const cw = 88 * sc;
+  const ch = 0.62 * h;
+  const cx = x + w - cw - 10 * sc;
+  const cy = y + (h - ch) / 2;
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(codeX - scale * 3, codeY - scale * 3, codeW + scale * 6, codeH + scale * 6);
+  ctx.fillRect(cx - 3 * sc, cy - 3 * sc, cw + 6 * sc, ch + 6 * sc);
   ctx.fillStyle = "#14041f";
-  let stripeW = 0;
-  let pen = codeX;
-  let rnd = 11;
-  while (pen < codeX + codeW - 2) {
-    rnd = (7 + 31 * rnd) % 97;
-    stripeW = 1 + (rnd % 3) * 1.4;
-    if (rnd % 3 !== 0) {
-      ctx.fillRect(pen, codeY, stripeW, codeH);
+  let sw = 0;
+  let pen = cx;
+  let r = 11;
+  while (pen < cx + cw - 2) {
+    r = (7 + 31 * r) % 97;
+    sw = 1 + (r % 3) * 1.4;
+    if (r % 3 !== 0) {
+      ctx.fillRect(pen, cy, sw, ch);
     }
-    pen += stripeW + 1.8;
+    pen += sw + 1.8;
   }
   ctx.restore(); // bottom strip done
 }
@@ -748,52 +748,52 @@ export function drawBottomStrip(ctx, rect, state) {
 // WANTED ★★★★★ pill on a photo panel's top-right corner (chaos mode),
 // tilted a touch like a stuck-on label.
 export function drawWantedPill(ctx, anchor, coverW) {
-  const scale = Math.max(coverW / 1920, 0.5);
-  const px = Math.max(13, scale * 24);
-  drawPillRight(ctx, anchor.x - scale * 10, anchor.y + scale * 10, "WANTED ★★★★★", "#14041f", "#ffd23f", px, { rot: -0.02, stroke: "#ffd23f" });
+  const sc = Math.max(coverW / 1920, 0.5);
+  const size = Math.max(13, 24 * sc);
+  drawPillRight(ctx, anchor.x - 10 * sc, anchor.y + 10 * sc, "WANTED ★★★★★", "#14041f", "#ffd23f", size, { rot: -0.02, stroke: "#ffd23f" });
 }
 
 // VOL. 06 chip + COLLECTOR'S EDITION ribbon at the title zone's
 // bottom-right (chaos mode), the way #2/#3 carry them.
 export function drawVolCluster(ctx, titleRect, state) {
-  const scale = Math.max(titleRect.w / 1920, 0.5);
-  const px = Math.max(13, scale * 26);
-  const top = titleRect.y + titleRect.h * 0.86;
-  const edge = titleRect.x + titleRect.w - titleRect.w * 0.025;
-  const volEdge = drawPillRight(ctx, edge, top, "VOL. 06", "#22d3ee", "#0b2a33", px, { square: true });
-  drawPillRight(ctx, volEdge - scale * 12, top, "COLLECTOR'S EDITION", "#ff2e7e", "#ffffff", px, { square: true });
+  const sc = Math.max(titleRect.w / 1920, 0.5);
+  const size = Math.max(13, 26 * sc);
+  const y = titleRect.y + 0.86 * titleRect.h;
+  const right = titleRect.x + titleRect.w - 0.025 * titleRect.w;
+  const left = drawPillRight(ctx, right, y, "VOL. 06", "#22d3ee", "#0b2a33", size, { square: true });
+  drawPillRight(ctx, left - 12 * sc, y, "COLLECTOR'S EDITION", "#ff2e7e", "#ffffff", size, { square: true });
 }
 
 // A press-quote pill straddling the panel/title boundary (hero mode) —
 // the top covers' star-quote strip, condensed into a pill so it never
 // covers a face. The wording is original, not copied from any top entry.
 export function drawQuotePill(ctx, titleRect, state) {
-  const cx = titleRect.x + titleRect.w / 2;
-  const edgeY = titleRect.y;
-  const scale = titleRect.w / 1920;
-  const mark = "★★★★★";
-  const quote = "‘THE CITY NEVER SLEEPS’ — THE CORAL HERALD";
+  const mid = titleRect.x + titleRect.w / 2;
+  const top = titleRect.y;
+  const sc = titleRect.w / 1920;
+  const stars = "★★★★★";
+  const line = "‘THE CITY NEVER SLEEPS’ — THE CORAL HERALD";
   ctx.save(); // quote pill
-  const px = Math.max(12, scale * 21);
-  ctx.font = px + "px Anton, sans-serif";
-  const markW = ctx.measureText(mark).width;
-  const quoteW = ctx.measureText(quote).width;
-  const gap = scale * 10;
-  const pad = scale * 18;
-  const pillW = markW + gap + quoteW + 2 * pad;
-  const pillH = scale * 42;
-  roundRectPath(ctx, cx - pillW * 0.5, edgeY - pillH * 0.5, pillW, pillH, pillH * 0.5);
+  const size = Math.max(12, 21 * sc);
+  ctx.font = size + "px Anton, sans-serif";
+  const mw = ctx.measureText(stars).width;
+  const qw = ctx.measureText(line).width;
+  const g = 10 * sc;
+  const p = 18 * sc;
+  const pw = mw + g + qw + 2 * p;
+  const ph = 42 * sc;
+  roundRectPath(ctx, mid - 0.5 * pw, top - 0.5 * ph, pw, ph, 0.5 * ph);
   ctx.fillStyle = "#14041f";
   ctx.fill();
-  ctx.lineWidth = Math.max(1.5, 2 * scale);
+  ctx.lineWidth = Math.max(1.5, 2 * sc);
   ctx.strokeStyle = "#ffd23f";
   ctx.stroke();
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffd23f";
-  ctx.fillText(mark, cx - pillW * 0.5 + pad, edgeY);
+  ctx.fillText(stars, mid - 0.5 * pw + p, top);
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(quote, cx - pillW * 0.5 + pad + markW + gap, edgeY);
+  ctx.fillText(line, mid - 0.5 * pw + p + mw + g, top);
   ctx.restore(); // quote pill done
 }
 
@@ -804,36 +804,36 @@ export function drawPanelCaption(ctx, p, cap, coverW) {
   if (cap == null) {
     return; // no caption to draw
   }
-  const scale = Math.max(coverW / 1920, 0.5);
-  const insetX = scale * 10;
-  const insetY = scale * 7;
-  const placeSize = Math.max(11, 15 * scale);
-  const lineSize = Math.max(9, 11 * scale);
-  const second = `${cap.time} · ${cap.line}`;
+  const sc = Math.max(coverW / 1920, 0.5);
+  const ix = 10 * sc;
+  const iy = 7 * sc;
+  const ps = Math.max(11, 15 * sc);
+  const ls = Math.max(9, 11 * sc);
+  const sub = `${cap.time} · ${cap.line}`;
   ctx.save(); // caption chip
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.font = placeSize + "px Anton, sans-serif";
-  const placeW = ctx.measureText(cap.place).width;
-  ctx.font = lineSize + "px sans-serif";
-  const lineW = ctx.measureText(second).width;
-  const boxW = Math.max(lineW, placeW) + 2 * insetX;
-  const boxH = 2 * insetY + placeSize + 4 * scale + lineSize;
-  const boxX = p.x + scale * 8;
-  const boxY = p.y + p.h - boxH - scale * 8;
-  if (boxH > p.h - scale * 16 || boxW > p.w - scale * 16) {
+  ctx.font = ps + "px Anton, sans-serif";
+  const pw = ctx.measureText(cap.place).width;
+  ctx.font = ls + "px sans-serif";
+  const lw = ctx.measureText(sub).width;
+  const bw = Math.max(lw, pw) + 2 * ix;
+  const bh = 2 * iy + ps + 4 * sc + ls;
+  const bx = p.x + 8 * sc;
+  const by = p.y + p.h - bh - 8 * sc;
+  if (bh > p.h - 16 * sc || bw > p.w - 16 * sc) {
     ctx.restore(); // caption chip skipped
     return;
   }
-  roundRectPath(ctx, boxX, boxY, boxW, boxH, scale * 4);
+  roundRectPath(ctx, bx, by, bw, bh, 4 * sc);
   ctx.fillStyle = "rgba(12,2,20,0.85)";
   ctx.fill();
   ctx.fillStyle = "#ffffff";
-  ctx.font = placeSize + "px Anton, sans-serif";
-  ctx.fillText(cap.place, boxX + insetX, insetY + boxY + placeSize);
+  ctx.font = ps + "px Anton, sans-serif";
+  ctx.fillText(cap.place, bx + ix, iy + by + ps);
   ctx.fillStyle = "#ffd7ef";
-  ctx.font = lineSize + "px sans-serif";
-  ctx.fillText(second, boxX + insetX, insetY + boxY + placeSize + 4 * scale + lineSize);
+  ctx.font = ls + "px sans-serif";
+  ctx.fillText(sub, bx + ix, iy + by + ps + 4 * sc + ls);
   ctx.restore(); // caption chip done
 }
 
@@ -844,23 +844,23 @@ export function drawPanelCaption(ctx, p, cap, coverW) {
  * assignments index into it.
  */
 export function drawCoverGrid(canvas, state, photos) {
-  const w = canvas.width;
-  const h = canvas.height;
+  const cw = canvas.width;
+  const ch = canvas.height;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#0d0214";
-  ctx.fillRect(0, 0, w, h);
-  const layout = layoutPanels(w, h, state.layout);
-  const { panels, title, badge, strip, wanted } = layout;
-  const layoutAssigns = state.assignments[state.layout];
-  const assigns = layoutAssigns ?? [];
-  const graded = new Map();
-  function cacheKey(pi, pw, ph, crop) {
-    return `${pi}|${pw}x${ph}|${crop.fx.toFixed(2)},${crop.fy.toFixed(2)},${crop.zoom.toFixed(2)}`;
+  ctx.fillRect(0, 0, cw, ch);
+  const geo = layoutPanels(cw, ch, state.layout);
+  const { panels, title, badge, strip, wanted } = geo;
+  const allCrops = state.assignments[state.layout];
+  const crops = allCrops ?? [];
+  const cache = new Map();
+  function keyFor(pi, pw, ph, cr) {
+    return `${pi}|${pw}x${ph}|${cr.fx.toFixed(2)},${cr.fy.toFixed(2)},${cr.zoom.toFixed(2)}`;
   }
 
-  for (let idx = 0; idx < panels.length; idx += 1) {
-    const panel = panels[idx];
-    const base = assigns[idx] ?? { photo: 0, fx: 0.5, fy: 0.4, zoom: 1 };
+  for (let pi = 0; pi < panels.length; pi += 1) {
+    const p = panels[pi];
+    const slot = crops[pi] ?? { photo: 0, fx: 0.5, fy: 0.4, zoom: 1 };
     // v5: per-ratio override — one crop cannot serve both the tall
     // portrait row and the short square row. A face that escapes the
     // title in portrait can sit fully behind the letters in square
@@ -868,78 +868,78 @@ export function drawCoverGrid(canvas, state, photos) {
     // of the panel, and the crop cannot push it below them). `sq`
     // replaces photo/crop for the square render only; landscape and
     // portrait are untouched by it.
-    const crop = w === h && base.sq !== undefined ? { ...base, ...base.sq } : base;
-    const photo = photos[crop.photo] ?? photos[0];
-    let layer = null;
-    if (photo !== undefined) {
-      const key = cacheKey(crop.photo, Math.round(panel.w), Math.round(panel.h), crop);
-      layer = graded.get(key);
-      if (layer === undefined) {
+    const cr = cw === ch && slot.sq !== undefined ? { ...slot, ...slot.sq } : slot;
+    const img = photos[cr.photo] ?? photos[0];
+    let lyr = null;
+    if (img !== undefined) {
+      const ck = keyFor(cr.photo, Math.round(p.w), Math.round(p.h), cr);
+      lyr = cache.get(ck);
+      if (lyr === undefined) {
         // Grade at most ~760 px wide, then upscale — fast and smooth.
-        const factor = Math.min(760 / panel.w, 1);
-        layer = gradePanelImage(photo, Math.max(2, factor * panel.w), Math.max(2, factor * panel.h), crop, state.grade);
-        graded.set(key, layer);
+        const factor = Math.min(760 / p.w, 1);
+        lyr = gradePanelImage(img, Math.max(2, factor * p.w), Math.max(2, factor * p.h), cr, state.grade);
+        cache.set(ck, lyr);
       }
     }
-    if (panel.rot !== undefined) {
+    if (p.rot !== undefined) {
       // Rotated photo card (chaos): clip to the panel rect in rotated
       // space and draw the graded image slightly oversized so the corners
       // stay covered after the rotation — the collage tilt of the top
       // covers. The black edge is stroked inside the same transform.
       ctx.save(); // rotated panel
-      ctx.translate(panel.x + panel.w / 2, panel.y + panel.h / 2);
-      ctx.rotate(panel.rot);
+      ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+      ctx.rotate(p.rot);
       ctx.beginPath();
-      ctx.rect(-panel.w / 2, -panel.h / 2, panel.w, panel.h);
+      ctx.rect(-p.w / 2, -p.h / 2, p.w, p.h);
       ctx.clip();
-      if (layer !== null) {
-        ctx.drawImage(layer, panel.w * -0.53, panel.h * -0.53, panel.w * 1.06, panel.h * 1.06);
+      if (lyr !== null) {
+        ctx.drawImage(lyr, p.w * -0.53, p.h * -0.53, p.w * 1.06, p.h * 1.06);
       }
       ctx.strokeStyle = "#0d0214";
-      ctx.lineWidth = (w / 1920) * GUTTER;
-      ctx.strokeRect(-0.5 * panel.w, -0.5 * panel.h, panel.w, panel.h);
+      ctx.lineWidth = (cw / 1920) * GUTTER;
+      ctx.strokeRect(-0.5 * p.w, -0.5 * p.h, p.w, p.h);
       ctx.restore(); // rotated panel done
     } else {
       ctx.save(); // plain panel
-      if (panel.slant !== undefined) {
+      if (p.slant !== undefined) {
         // Diagonal panel: clip a parallelogram, draw the photo inside it.
         ctx.beginPath();
-        ctx.moveTo(panel.x + panel.slant, panel.y);
-        ctx.lineTo(panel.x + panel.w, panel.y);
-        ctx.lineTo(panel.x + panel.w - panel.slant, panel.y + panel.h);
-        ctx.lineTo(panel.x, panel.y + panel.h);
+        ctx.moveTo(p.x + p.slant, p.y);
+        ctx.lineTo(p.x + p.w, p.y);
+        ctx.lineTo(p.x + p.w - p.slant, p.y + p.h);
+        ctx.lineTo(p.x, p.y + p.h);
         ctx.closePath();
         ctx.clip();
-      } else if (panel.snap) {
-        ctx.translate(panel.x + panel.w / 2, panel.y + panel.h / 2);
+      } else if (p.snap) {
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
         ctx.rotate(-0.045);
-        ctx.translate(-panel.w / 2, -panel.h / 2);
+        ctx.translate(-p.w / 2, -p.h / 2);
       }
-      if (layer !== null) {
+      if (lyr !== null) {
         let dx = 0;
         let dy = 0;
-        let dw = panel.w;
-        let dh = panel.h;
-        if (panel.snap) {
-          dx = panel.w * -0.04;
-          dy = panel.h * -0.04;
-          dw = panel.w * 1.08;
-          dh = panel.h * 1.08;
+        let dw = p.w;
+        let dh = p.h;
+        if (p.snap) {
+          dx = p.w * -0.04;
+          dy = p.h * -0.04;
+          dw = p.w * 1.08;
+          dh = p.h * 1.08;
           // White polaroid border around the snapshot.
           ctx.fillStyle = "#ffffff";
-          ctx.fillRect(panel.w * -0.05, panel.h * -0.05, panel.w * 1.1, panel.h * 1.16);
-          ctx.drawImage(layer, dx, dy, dw, dh);
+          ctx.fillRect(p.w * -0.05, p.h * -0.05, p.w * 1.1, p.h * 1.16);
+          ctx.drawImage(lyr, dx, dy, dw, dh);
         } else {
-          ctx.drawImage(layer, panel.x, panel.y, panel.w, panel.h);
+          ctx.drawImage(lyr, p.x, p.y, p.w, p.h);
         }
       }
       ctx.restore(); // plain panel done
       // Black gutter edge per panel.
       ctx.save(); // gutter edge
       ctx.strokeStyle = "#0d0214";
-      ctx.lineWidth = (w / 1920) * GUTTER;
+      ctx.lineWidth = (cw / 1920) * GUTTER;
       ctx.beginPath();
-      ctx.rect(panel.x, panel.y, panel.w, panel.h);
+      ctx.rect(p.x, p.y, p.w, p.h);
       ctx.stroke();
       ctx.restore(); // gutter edge done
     }
@@ -948,18 +948,18 @@ export function drawCoverGrid(canvas, state, photos) {
     // toggles captions off). In chaos mode a chip whose panel runs
     // deep under the title would sit under the dark scrim and turn
     // muddy — the top covers leave those panels clean — so skip it.
-    const hiddenByTitle = state.layout === "chaos" && title.y + 60 < panel.y + panel.h;
-    if (state.showCaptions !== false && hiddenByTitle === false) {
-      const caps = state.captions ?? [];
-      const caption = caps[crop.photo] ?? { place: "YOUR SHOT", time: "TONIGHT", line: "SHOT ON YOUR CAMERA" };
-      drawPanelCaption(ctx, panel, caption, w);
+    const underTitle = state.layout === "chaos" && title.y + 60 < p.y + p.h;
+    if (state.showCaptions !== false && underTitle === false) {
+      const list = state.captions ?? [];
+      const cap = list[cr.photo] ?? { place: "YOUR SHOT", time: "TONIGHT", line: "SHOT ON YOUR CAMERA" };
+      drawPanelCaption(ctx, p, cap, cw);
     }
   }
 
   // WANTED pill on the fisherman panel (chaos mode) — drawn on the
   // photo, before the title paints over the lower panels.
   if (state.layout === "chaos" && wanted !== undefined) {
-    drawWantedPill(ctx, wanted, w);
+    drawWantedPill(ctx, wanted, cw);
   }
 
   drawTitleBlock(ctx, title, state);
@@ -977,24 +977,24 @@ export function drawCoverGrid(canvas, state, photos) {
   }
 
   // Poster furniture.
-  const badgeR = Math.max(w * 0.038, 34);
-  drawStarburstBadge(ctx, badge.x, badge.y, badgeR, "EST.", "2026");
+  const br = Math.max(0.038 * cw, 34);
+  drawStarburstBadge(ctx, badge.x, badge.y, br, "EST.", "2026");
   if (state.showRibbon !== false) {
     ctx.save(); // ribbon
-    const ribbonW = w * 0.2;
-    const ribbonH = Math.max(h * 0.035, 18);
+    const rw = 0.2 * cw;
+    const rh = Math.max(0.035 * ch, 18);
     ctx.fillStyle = "#ff2e7e";
-    ctx.fillRect(w - ribbonW - (w / 1920) * GUTTER, (w / 1920) * GUTTER + h * 0.02, ribbonW, ribbonH);
+    ctx.fillRect(cw - rw - (cw / 1920) * GUTTER, (cw / 1920) * GUTTER + 0.02 * ch, rw, rh);
     ctx.fillStyle = "#ffffff";
-    ctx.font = Math.max(ribbonH * 0.42, 11) + "px Anton, sans-serif";
+    ctx.font = Math.max(0.42 * rh, 11) + "px Anton, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("ORIGINAL · FAN MADE", w - ribbonW * 0.5 - (w / 1920) * GUTTER, (w / 1920) * GUTTER + ribbonH * 0.5 + h * 0.02);
+    ctx.fillText("ORIGINAL · FAN MADE", cw - 0.5 * rw - (cw / 1920) * GUTTER, (cw / 1920) * GUTTER + 0.5 * rh + 0.02 * ch);
     ctx.restore(); // ribbon done
   }
   if (state.showBarcode !== false && title.mode !== "cell" && title.mode !== "hero") {
-    const barTitle = state.title !== undefined && state.title !== "" ? state.title : "PALM HEAT";
-    drawBarcode(ctx, w - w * 0.09 - GUTTER, h - h * 0.075, w * 0.09, h * 0.055, barTitle);
+    const bt = state.title !== undefined && state.title !== "" ? state.title : "PALM HEAT";
+    drawBarcode(ctx, cw - 0.09 * cw - GUTTER, ch - 0.075 * ch, 0.09 * cw, 0.055 * ch, bt);
   }
   return { strip: strip, title: title, panels: panels };
 }
@@ -1002,11 +1002,11 @@ export function drawCoverGrid(canvas, state, photos) {
 /** Renders the cover offscreen at an exact post size and returns a PNG blob. */
 export function exportCoverPNG(state, photos, sizeKey) {
   return new Promise((resolve) => {
-    const dims = EXPORT_SIZES[sizeKey];
-    const c = document.createElement("canvas");
-    c.width = dims.w;
-    c.height = dims.h;
-    drawCoverGrid(c, state, photos);
-    c.toBlob(resolve, "image/png");
+    const size = EXPORT_SIZES[sizeKey];
+    const cv = document.createElement("canvas");
+    cv.width = size.w;
+    cv.height = size.h;
+    drawCoverGrid(cv, state, photos);
+    cv.toBlob(resolve, "image/png");
   });
 }

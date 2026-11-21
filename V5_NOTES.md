@@ -1,4 +1,4 @@
-# V5 notes — the final round before submit (gta6-cover-art-01)
+# V5 notes — the last round before submit (gta6-cover-art-01)
 
 Still nothing submitted, pushed or committed. HEAD remains `fb3c0fc`; everything sits in the worktree. Recording `01a1f3ee-5b16-772e-b03a-8d8309487db3` (PID 11313) keeps running, untouched. The bounty closes Saturday 21 Nov at 17:30 WIB, quota still a full 3/3. Bos's rule stands: SUBMIT TERAKHIR = FINAL — no submit just to measure; the work has to be right first.
 
@@ -16,13 +16,15 @@ In `cover.js` drawTitleBlock, hero/chaos mode: shadow alpha 0.55 → **0.8**, bl
 
 ### 3. Rooftop man's face in portrait/square — v4 gap #3, closed
 
-Analysis first, no guessing: in portrait/square the 3-panel row is P1 P2 P3, and the title crashes over the WHOLE row, so any face in the LEFT column ends up behind the "P" and no crop can free it.
+Analysis first, no guessing: in portrait/square the 3-panel row is P1 P2 P3, and the title crashes
+over the WHOLE row, so any face in the LEFT column ends up behind the "P" and no crop can free it.
 
 - **Row reorder** (chaos assignments): P1 becomes the orange car (no face), P2 neon, P3 rooftop. Landscape is unchanged: P1 mid-top and P3 right-top both sit fully above the title, so car, rooftop and fisherman all stay whole there. Fisherman moves to P4 (right-mid); WANTED stays at P4's top-right corner — it does not cover a face, since the face is at the panel's middle-left.
 - **Portrait: THE FACE IS VISIBLE.** Every panel's crop was checked at 2× zoom: eyes, nose and beard clear, only the mouth slightly touched by the letter "A". Before, the whole face sat behind "P".
 - **Square: no crop frees the face** — proven, not assumed. The face sits at the top of its photo, the letters cover the top of the panel, and no crop can push the face below the letters at any zoom (zoom 1.35 tried: only the beard appeared below the letters, the eyes stayed hidden). Fix: a new per-ratio `sq` override in `drawCoverGrid` (w === h) — P3 in square uses the coast-road photo (no face). Square is now clean: sunset hero + car + neon + coast, no hidden face. Portrait and landscape are untouched by this override.
 
-Kept from v4: chaos layout, tilted panels, VOL.06, WANTED, COLLECTOR'S EDITION, the photographic grade, 8 photos (+1 sunset = 9 samples), the quote pill, strip + barcode, starburst, ribbon.
+Kept from v4: chaos layout, tilted panels, VOL.06, WANTED, COLLECTOR'S EDITION, the photographic
+grade, 8 photos (+1 sunset = 9 samples), the quote pill, strip + barcode, starburst, ribbon.
 
 ## Tests — all passing, verified by me
 
@@ -35,7 +37,9 @@ Kept from v4: chaos layout, tilted panels, VOL.06, WANTED, COLLECTOR'S EDITION, 
 
 ## Honest comparison with the top 3
 
-Side by side, we now fully share the visual language of #1/#3: a blazing sunset hero, the title crashing into the photo, tilted panels, 6 photos, a warm grade, all the furniture (VOL.06, WANTED, COLLECTOR'S, quote pill, strip, starburst on a junction). All three named v4 gaps are closed.
+Side by side, we now fully share the visual language of #1/#3: a blazing sunset hero, the title
+crashing into the photo, tilted panels, 6 photos, a warm grade, all the furniture (VOL.06, WANTED,
+COLLECTOR'S, quote pill, strip, starburst on a junction). All three named v4 gaps are closed.
 
 **Gaps that remain — named:**
 1. **The neon couple in the middle panel (portrait/square).** Title letters half cover their faces. #1's motorbike panel is half covered the same way — a property of the chaos formula, not a flaw unique to us.
@@ -44,8 +48,12 @@ Side by side, we now fully share the visual language of #1/#3: a blazing sunset 
 
 ## Verdict, honestly
 
-**Top 10 is now CREDIBLE — every gap that could be named and fixed has been closed.** A paid place (top 50) is very likely. But top 10 is still UNPROVEN — the only proof is the dev grade after submit, and Bos has already ruled that the last submit is final (no submit to measure). Rank 1 cannot be claimed.
+**Top 10 is now CREDIBLE — every gap that could be named and fixed has been closed.** A paid place
+(top 50) is very likely. But top 10 is still UNPROVEN — the only proof is the dev grade after
+submit, and Bos has already ruled that the last submit is final (no submit to measure). Rank 1
+cannot be claimed.
 
 ## Parent steps before submit
 
 Commit + push to a **NEW public repo** (drand anchor — the repo must be created after 2026-11-19 10:30 UTC), `.makefun/owner.json`, write muse-usage, seal recording PID 11313, then submit. This bounty still has quota 3/3. Deadline Saturday 21 Nov 17:30 WIB.
+

@@ -1,42 +1,44 @@
 @font-face{
   font-family: "Pacifico";
-  src: url("./fonts/Pacifico-Regular.ttf") format("truetype");
   font-display: swap;
+  src: url("./fonts/Pacifico-Regular.ttf") format("truetype");
 }
 @font-face{
   font-family: "Anton";
-  src: url("./fonts/Anton-Regular.ttf") format("truetype");
   font-display: swap;
+  src: url("./fonts/Anton-Regular.ttf") format("truetype");
 }
 
 html, body{
-  margin: 0px; min-height: 100%;
-  background: #14041f; color: #f5eef7;
-  font: 15px/1.45 system-ui, sans-serif;
+  margin: 0;
+  background: #14041f; min-height: 100%;
+  color: #f5eef7; font: 15px/1.45 system-ui, sans-serif;
 }
 *{ box-sizing: border-box; }
 
 .topbar{
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 16px;
   padding: 12px 20px;
   background: linear-gradient(90deg, #ff2e7e, #ff7a2f);
   border-bottom: 3px solid #0d0214;
 }
 .brand{
-  display: flex; align-items: center; gap: 12px;
-  min-width: 0px;
+  display: flex;
+  align-items: center; gap: 12px; min-width: 0;
 }
 .logo{
   display: grid; place-items: center; flex: none;
   width: 44px; height: 44px;
-  border-radius: 10px; background: #14041f; color: #ffd23f;
+  border-radius: 10px;
+  background: #14041f; color: #ffd23f;
   font: 20px "Anton", sans-serif; letter-spacing: 1px;
 }
 .topbar h1{
-  margin: 0px; color: #fff;
+  margin: 0; color: #fff;
   font: 22px "Anton", sans-serif; letter-spacing: 1px;
 }
-.topbar p{ margin: 0px; color: #ffe9f2; font-size: 13px; }
+.topbar p{ margin: 0; color: #ffe9f2; font-size: 13px; }
 .top-actions{ display: flex; flex: none; gap: 8px; }
 
 .app{
@@ -44,7 +46,8 @@ html, body{
   padding: 18px 20px 28px;
 }
 .controls{
-  display: flex; flex: none; flex-direction: column; gap: 10px;
+  display: flex; flex: none;
+  flex-direction: column; gap: 10px;
   width: 308px; max-height: calc(100vh - 110px);
   overflow-y: auto; padding-right: 2px;
 }
@@ -54,7 +57,7 @@ html, body{
   border: 1px solid #3d1b4d; border-radius: 12px; background: #22102e;
 }
 .group h2{
-  margin: 0px; color: #ffd23f;
+  margin: 0; color: #ffd23f;
   font: 15px "Anton", sans-serif; letter-spacing: 1px;
 }
 .group label{
@@ -75,7 +78,7 @@ input[type=text]{
 input[type=range]{ width: 100%; accent-color: #ff2e7e; }
 
 button{
-  padding: 9px 12px; border: 0px; border-radius: 8px;
+  padding: 9px 12px; border: 0; border-radius: 8px;
   background: #3d1b4d; color: #fff; cursor: pointer;
   font: inherit; font-weight: 700;
 }
@@ -101,7 +104,7 @@ button.big{ padding: 12px; font-size: 16px; }
 }
 .strip{ display: flex; flex-wrap: wrap; gap: 6px; }
 .thumb{
-  width: 62px; height: 46px; padding: 0px; overflow: hidden;
+  width: 62px; height: 46px; padding: 0; overflow: hidden;
   border: 2px solid transparent; border-radius: 6px; background: none;
 }
 .thumb img{
@@ -126,25 +129,25 @@ button.big{ padding: 12px; font-size: 16px; }
 }
 .stars button.active{ color: #ffd23f; }
 
-.hint{ margin: 0px; color: #c9a8d4; font-size: 13px; }
-#status{ margin: 0px; min-height: 20px; color: #ffd23f; font-size: 13px; }
+.hint{ margin: 0; color: #c9a8d4; font-size: 13px; }
+#status{ margin: 0; min-height: 20px; color: #ffd23f; font-size: 13px; }
 
-.stage{ flex: 1; min-width: 0px; }
+.stage{ flex: 1; min-width: 0; }
 .stage canvas{
   display: block;
   width: 100%; height: auto;
   border-radius: 6px; background: #0d0214;
   box-shadow: 0 12px 40px rgba(0,0,0,0.55);
 }
-.stage-note{ margin: 10px 2px 0px; color: #a98ab5; font-size: 13px; }
+.stage-note{ margin: 10px 2px 0; color: #a98ab5; font-size: 13px; }
 
 /* Shot scenes for screenshots: hide the editor chrome, canvas fills the frame. */
 body.shot-cover{ background: #0d0214; }
 body.shot-cover .topbar,
 body.shot-cover .controls,
 body.shot-cover .stage-note{ display: none; }
-body.shot-cover .app{ display: block; padding: 0px; }
+body.shot-cover .app{ display: block; padding: 0; }
 body.shot-cover .stage canvas{
   width: 100vw; height: 100vh;
-  border-radius: 0px; box-shadow: none; object-fit: fill;
+  border-radius: 0; box-shadow: none; object-fit: fill;
 }

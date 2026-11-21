@@ -1,10 +1,10 @@
-// grades.js — the colour grades painted onto each cover panel.
+// grades.js — colour grades for every cover panel.
 //
-// A grade is a gradient map: a pixel's brightness picks a colour out
-// of the grade's palette, and that colour is blended back toward the
+// Each grade is a gradient map: a pixel's brightness selects a colour
+// from the grade's palette, and that colour is blended back toward the
 // pixel it came from, so a photo keeps its own identity instead of
-// going flat. Poster Ink adds a comic-book pass on top of that: a few
-// flat posterised levels, halftone dots, film grain, and a vignette.
+// going flat. Poster Ink adds a comic-book pass on top: a few flat
+// posterised levels, halftone dots, film grain, and a vignette.
 // Everything runs on plain 2D canvas pixels, so it works on any
 // photo — samples, phone shots, anything — with no network and no
 // library.
@@ -16,41 +16,41 @@
 // that same band before posterising, so faces stay warm while the
 // shadows keep their violet depth.
 
-function clampByte(v) {
-  return Math.min(255, Math.max(0, v));
+function clamp255(v) {
+  return Math.max(0, Math.min(255, v));
 }
 
-// Palette stops per grade, as {at, r, g, b} stops the lookup reads.
+// Palette stops per grade, as {r, g, b, at} stops the lookup reads.
 export const GRADE_PALETTES = {
   sunset: [
-    { at: 0.0, r: 26, g: 8, b: 46 },
-    { at: 0.28, r: 100, g: 40, b: 70 },
-    { at: 0.55, r: 220, g: 130, b: 80 },
-    { at: 0.78, r: 250, g: 160, b: 90 },
-    { at: 1.0, r: 255, g: 210, b: 63 },
+    { r: 26, g: 8, b: 46, at: 0.0 },
+    { r: 100, g: 40, b: 70, at: 0.28 },
+    { r: 220, g: 130, b: 80, at: 0.55 },
+    { r: 250, g: 160, b: 90, at: 0.78 },
+    { r: 255, g: 210, b: 63, at: 1.0 },
   ],
   neon: [
-    { at: 0.0, r: 10, g: 8, b: 48 },
-    { at: 0.3, r: 74, g: 20, b: 120 },
-    { at: 0.55, r: 168, g: 38, b: 150 },
-    { at: 0.78, r: 255, g: 64, b: 160 },
-    { at: 1.0, r: 64, g: 224, b: 208 },
+    { r: 10, g: 8, b: 48, at: 0.0 },
+    { r: 74, g: 20, b: 120, at: 0.3 },
+    { r: 168, g: 38, b: 150, at: 0.55 },
+    { r: 255, g: 64, b: 160, at: 0.78 },
+    { r: 64, g: 224, b: 208, at: 1.0 },
   ],
   golden: [
-    { at: 0.0, r: 40, g: 20, b: 8 },
-    { at: 0.3, r: 122, g: 62, b: 18 },
-    { at: 0.55, r: 214, g: 122, b: 32 },
-    { at: 0.8, r: 255, g: 176, b: 64 },
-    { at: 1.0, r: 255, g: 236, b: 160 },
+    { r: 40, g: 20, b: 8, at: 0.0 },
+    { r: 122, g: 62, b: 18, at: 0.3 },
+    { r: 214, g: 122, b: 32, at: 0.55 },
+    { r: 255, g: 176, b: 64, at: 0.8 },
+    { r: 255, g: 236, b: 160, at: 1.0 },
   ],
   // Warm mids on purpose: coral-orange at 0.55 rather than magenta-pink,
   // so skin in the poster-ink pass reads sun-warmed instead of purple.
   ink: [
-    { at: 0.0, r: 22, g: 6, b: 38 },
-    { at: 0.3, r: 132, g: 38, b: 62 },
-    { at: 0.55, r: 224, g: 72, b: 84 },
-    { at: 0.78, r: 255, g: 138, b: 58 },
-    { at: 1.0, r: 255, g: 214, b: 92 },
+    { r: 22, g: 6, b: 38, at: 0.0 },
+    { r: 132, g: 38, b: 62, at: 0.3 },
+    { r: 224, g: 72, b: 84, at: 0.55 },
+    { r: 255, g: 138, b: 58, at: 0.78 },
+    { r: 255, g: 214, b: 92, at: 1.0 },
   ],
 };
 
@@ -59,42 +59,42 @@ export const GRADE_PALETTES = {
  * the mapped colour replaces the original pixel (1 = full gradient map).
  */
 export function buildGradeLUT(grade, strength = 0.62) {
-  const ramp = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
-  const luts = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
-  for (let n = 0; n < 256; n += 1) {
-    const t = n / 255;
-    let lo = ramp[0];
-    let hi = ramp[ramp.length - 1];
-    for (let i = 0; i + 1 < ramp.length; i += 1) {
-      if (t >= ramp[i].at && t <= ramp[i + 1].at) {
-        lo = ramp[i];
-        hi = ramp[i + 1];
+  const stops = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
+  const tables = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
+  for (let v = 0; v < 256; v += 1) {
+    const pos = v / 255;
+    let a = stops[0];
+    let b = stops[stops.length - 1];
+    for (let i = 0; i + 1 < stops.length; i += 1) {
+      if (pos >= stops[i].at && pos <= stops[i + 1].at) {
+        a = stops[i];
+        b = stops[i + 1];
         break;
       }
     }
-    const span = hi.at - lo.at;
-    const mix = span === 0 ? 0 : (t - lo.at) / span;
-    for (const channel of ["r", "g", "b"]) {
-      const mapped = lo[channel] + (hi[channel] - lo[channel]) * mix;
-      luts[channel][n] = Math.round(n + (mapped - n) * strength);
+    const range = b.at - a.at;
+    const frac = range === 0 ? 0 : (pos - a.at) / range;
+    for (const ch of ["r", "g", "b"]) {
+      const col = a[ch] + (b[ch] - a[ch]) * frac;
+      tables[ch][v] = Math.round((col - v) * strength + v);
     }
   }
-  return luts;
+  return tables;
 }
 
 /** Pushes every pixel through the grade LUT, keyed by brightness. */
-export function applyGradientGrade(frame, grade, strength) {
-  const lut = buildGradeLUT(grade, strength);
-  const buf = frame.data;
-  let i = 0;
-  while (i < buf.length) {
-    const lum = (0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2]) | 0;
-    buf[i] = lut.r[lum];
-    buf[i + 1] = lut.g[lum];
-    buf[i + 2] = lut.b[lum];
-    i += 4;
+export function applyGradientGrade(img, grade, strength) {
+  const tables = buildGradeLUT(grade, strength);
+  const px = img.data;
+  let k = 0;
+  while (k < px.length) {
+    const bright = (px[k] * 0.299 + px[k + 1] * 0.587 + px[k + 2] * 0.114) | 0;
+    px[k] = tables.r[bright];
+    px[k + 1] = tables.g[bright];
+    px[k + 2] = tables.b[bright];
+    k += 4;
   }
-  return frame;
+  return img;
 }
 
 /**
@@ -103,21 +103,21 @@ export function applyGradientGrade(frame, grade, strength) {
  * This runs before posterising so the poster-ink grade keeps faces warm
  * rather than pushing them toward violet. `amount` 0..1; 0.5 is gentle.
  */
-export function warmSkinTones(frame, amount = 0.5) {
-  const buf = frame.data;
-  const redLift = amount * 14;
-  const blueCut = amount * 12;
-  for (let i = 0; i < buf.length; i += 4) {
-    const lum = 0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2];
-    if (lum < 70 || lum > 215) {
+export function warmSkinTones(img, amount = 0.5) {
+  const px = img.data;
+  const rBoost = amount * 14;
+  const bCut = amount * 12;
+  for (let i = 0; i < px.length; i += 4) {
+    const bright = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    if (bright < 70 || bright > 215) {
       continue;
     }
     // Triangle weight: full effect near brightness 140, none at the edges.
-    const wgt = lum < 140 ? (lum - 70) / 70 : (215 - lum) / 75;
-    buf[i] = clampByte(redLift * wgt + buf[i]);
-    buf[i + 2] = clampByte(buf[i + 2] - wgt * blueCut);
+    const w = bright < 140 ? (bright - 70) / 70 : (215 - bright) / 75;
+    px[i] = clamp255(px[i] + rBoost * w);
+    px[i + 2] = clamp255(px[i + 2] - bCut * w);
   }
-  return frame;
+  return img;
 }
 
 /**
@@ -125,148 +125,148 @@ export function warmSkinTones(frame, amount = 0.5) {
  * lift that grows with brightness, so skies and highlights glow sunset
  * instead of staying pale blue-white. Only the sunset grade uses it.
  */
-export function warmHighlights(img, amount = 0.5, cutoff = 175) {
-  const d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    if (lum <= cutoff) {
+export function warmHighlights(frame, amount = 0.5, cutoff = 175) {
+  const px = frame.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const bright = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    if (bright <= cutoff) {
       continue;
     }
-    const wgt = ((lum - cutoff) / (255 - cutoff)) * amount;
-    d[i] = clampByte(d[i] + wgt * 26);
-    d[i + 1] = clampByte(d[i + 1] + wgt * 8);
-    d[i + 2] = clampByte(d[i + 2] - wgt * 14);
+    const w = ((bright - cutoff) / (255 - cutoff)) * amount;
+    px[i] = clamp255(px[i] + 26 * w);
+    px[i + 1] = clamp255(px[i + 1] + 8 * w);
+    px[i + 2] = clamp255(px[i + 2] - 14 * w);
+  }
+  return frame;
+}
+
+/** Flattens each channel to `levels` even steps — the comic-ink feel. */
+export function posterizeImageData(img, levels = 5) {
+  const px = img.data;
+  const gap = 255 / (levels - 1);
+  for (let i = 0; i < px.length; i += 4) {
+    for (let c = 0; c <= 2; c += 1) {
+      const q = Math.round(px[i + c] / gap) * gap;
+      px[i + c] = Math.round(q);
+    }
   }
   return img;
 }
 
-/** Flattens each channel to `levels` even steps — the comic-ink feel. */
-export function posterizeImageData(frame, levels = 5) {
-  const d = frame.data;
-  const step = 255 / (levels - 1);
-  for (let i = 0; i < d.length; i += 4) {
-    for (let c = 0; c <= 2; c += 1) {
-      const stepped = Math.round(d[i + c] / step) * step;
-      d[i + c] = Math.round(stepped);
-    }
-  }
-  return frame;
-}
-
 /** Pushes colours away from grey in place (1 leaves them unchanged). */
-export function saturateImageData(frame, boost = 1.25) {
-  const buf = frame.data;
-  for (let i = 0; i < buf.length; i += 4) {
-    const lum = 0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2];
+export function saturateImageData(img, gain = 1.25) {
+  const px = img.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const bright = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
     for (let c = 0; c <= 2; c += 1) {
-      buf[i + c] = clampByte((buf[i + c] - lum) * boost + lum);
+      px[i + c] = clamp255(bright + (px[i + c] - bright) * gain);
     }
   }
-  return frame;
+  return img;
 }
 
-let halftoneTile = null;
+let dotTile = null;
 /** A reusable tile of print dots, denser toward one corner of a cell. */
 export function makeHalftonePattern(size = 96) {
-  if (halftoneTile === null) {
-    const sheet = document.createElement("canvas");
-    sheet.width = size;
-    sheet.height = size;
-    const gc = sheet.getContext("2d");
-    const grid = 12;
-    for (let r = 0; r < size / grid; r += 1) {
-      for (let c = 0; c < size / grid; c += 1) {
-        const dot = 1 + ((r + c) % 4) * 1.1;
-        gc.fillStyle = "rgba(20,4,32,0.55)";
-        gc.beginPath();
-        gc.arc(grid * c + 0.5 * grid, grid * r + 0.5 * grid, dot, 0, 2 * Math.PI);
-        gc.fill();
+  if (dotTile === null) {
+    const tile = document.createElement("canvas");
+    tile.width = size;
+    tile.height = size;
+    const g = tile.getContext("2d");
+    const cell = 12;
+    for (let r = 0; r < size / cell; r += 1) {
+      for (let c = 0; c < size / cell; c += 1) {
+        const rad = 1 + 1.1 * ((r + c) % 4);
+        g.fillStyle = "rgba(20,4,32,0.55)";
+        g.beginPath();
+        g.arc(c * cell + cell * 0.5, r * cell + cell * 0.5, rad, 0, Math.PI * 2);
+        g.fill();
       }
     }
-    halftoneTile = sheet;
+    dotTile = tile;
   }
-  return halftoneTile;
+  return dotTile;
 }
 
 /** Lays halftone dots over a panel at low opacity. */
 export function applyHalftone(ctx, w, h, alpha = 0.16) {
-  const dots = ctx.createPattern(makeHalftonePattern(), "repeat");
+  const pat = ctx.createPattern(makeHalftonePattern(), "repeat");
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = dots;
+  ctx.fillStyle = pat;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
 }
 
-let grainTile = null;
+let noiseTile = null;
 /** A reusable tile of neutral film grain, built once. */
 export function makeGrainCanvas(size = 160) {
-  if (grainTile === null) {
-    const sheet = document.createElement("canvas");
-    sheet.width = size;
-    sheet.height = size;
-    const gc = sheet.getContext("2d");
-    const img = gc.createImageData(size, size);
-    for (let i = 0; i < img.data.length; i += 4) {
-      const v = Math.floor(Math.random() * 40) + 98;
-      img.data[i] = v;
-      img.data[i + 1] = v;
-      img.data[i + 2] = v;
-      img.data[i + 3] = 255;
+  if (noiseTile === null) {
+    const tile = document.createElement("canvas");
+    tile.width = size;
+    tile.height = size;
+    const g = tile.getContext("2d");
+    const im = g.createImageData(size, size);
+    for (let i = 0; i < im.data.length; i += 4) {
+      const val = 98 + Math.floor(40 * Math.random());
+      im.data[i] = val;
+      im.data[i + 1] = val;
+      im.data[i + 2] = val;
+      im.data[i + 3] = 255;
     }
-    gc.putImageData(img, 0, 0);
-    grainTile = sheet;
+    g.putImageData(im, 0, 0);
+    noiseTile = tile;
   }
-  return grainTile;
+  return noiseTile;
 }
 
 /** Dusts film grain over a panel with an overlay blend. */
 export function applyGrain(ctx, w, h, alpha = 0.07) {
-  const dots = ctx.createPattern(makeGrainCanvas(), "repeat");
+  const pat = ctx.createPattern(makeGrainCanvas(), "repeat");
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.globalCompositeOperation = "overlay";
-  ctx.fillStyle = dots;
+  ctx.fillStyle = pat;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
 }
 
 /** Darkens a panel's corners so it reads like a printed poster. */
-export function applyVignette(ctx, w, h, strength = 0.28) {
-  const shade = ctx.createRadialGradient(
-    w * 0.5, h * 0.5, Math.min(w, h) * 0.32,
-    w * 0.5, h * 0.5, Math.max(w, h) * 0.72,
+export function applyVignette(ctx, w, h, power = 0.28) {
+  const grad = ctx.createRadialGradient(
+    0.5 * w, 0.5 * h, 0.32 * Math.min(h, w),
+    0.5 * w, 0.5 * h, 0.72 * Math.max(h, w),
   );
-  shade.addColorStop(0, "rgba(10,2,20,0)");
-  shade.addColorStop(1, "rgba(10,2,20," + strength + ")");
+  grad.addColorStop(0, "rgba(10,2,20,0)");
+  grad.addColorStop(1, "rgba(10,2,20," + power + ")");
   ctx.save();
-  ctx.fillStyle = shade;
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
 }
 
 /**
- * Grades one photo panel and returns the graded canvas. `cropSpec` is
+ * Grades one photo panel and returns the graded canvas. `crop` is
  * {fx, fy, zoom} — the focus point (0..1) and zoom (>= 1). The grade
  * runs at most ~760 px wide and is upscaled on draw, which keeps the
  * pixel loops fast without visible loss at post sizes.
  */
-export function gradePanelImage(img, panelW, panelH, cropSpec, grade) {
-  const out = document.createElement("canvas");
-  const gw = Math.round(panelW);
-  const gh = Math.round(panelH);
-  out.width = Math.max(gw, 2);
-  out.height = Math.max(gh, 2);
-  const gc = out.getContext("2d");
-  drawCroppedPhoto(gc, img, 0, 0, panelW, panelH, cropSpec);
-  const frame = gc.getImageData(0, 0, out.width, out.height);
-  switch (grade) {
+export function gradePanelImage(photo, pw, ph, crop, gradeName) {
+  const cv = document.createElement("canvas");
+  const cw = Math.round(pw);
+  const ch = Math.round(ph);
+  cv.width = Math.max(2, cw);
+  cv.height = Math.max(2, ch);
+  const g = cv.getContext("2d");
+  drawCroppedPhoto(g, photo, 0, 0, pw, ph, crop);
+  const frame = g.getImageData(0, 0, cv.width, cv.height);
+  switch (gradeName) {
+    case "golden":
+      applyGradientGrade(frame, "golden", 58 / 100);
+      break;
     case "neon":
       saturateImageData(frame, 13 / 10);
       applyGradientGrade(frame, "neon", 6 / 10);
-      break;
-    case "golden":
-      applyGradientGrade(frame, "golden", 58 / 100);
       break;
     case "ink":
       saturateImageData(frame, 12 / 10);
@@ -288,33 +288,33 @@ export function gradePanelImage(img, panelW, panelH, cropSpec, grade) {
       warmHighlights(frame, 55 / 100);
       break;
   }
-  gc.putImageData(frame, 0, 0);
-  if (grade === "ink") {
-    applyHalftone(gc, out.width, out.height, 12 / 100);
+  g.putImageData(frame, 0, 0);
+  if (gradeName === "ink") {
+    applyHalftone(g, cv.width, cv.height, 12 / 100);
   }
-  const grainAmt = grade === "ink" ? 9 / 100 : 6 / 100;
-  applyGrain(gc, out.width, out.height, grainAmt);
-  const vigAmt = grade === "ink" ? 3 / 10 : 18 / 100;
-  applyVignette(gc, out.width, out.height, vigAmt);
-  return out;
+  const grainAmt = gradeName === "ink" ? 9 / 100 : 6 / 100;
+  applyGrain(g, cv.width, cv.height, grainAmt);
+  const vigAmt = gradeName === "ink" ? 3 / 10 : 18 / 100;
+  applyVignette(g, cv.width, cv.height, vigAmt);
+  return cv;
 }
 
 /**
- * Cover-fits `img` into the rect (destX, destY, w, h) on `ctx`, panning
+ * Cover-fits `photo` into the rect (dx, dy, tw, th) on `g`, panning
  * toward the focus point and zooming in. The crop never shows empty
  * space.
  */
-export function drawCroppedPhoto(ctx, img, destX, destY, w, h, cropSpec = {}) {
-  const srcW = img.naturalWidth || img.width;
-  const srcH = img.naturalHeight || img.height;
-  const fx = cropSpec.fx ?? 0.5;
-  const fy = cropSpec.fy ?? 0.4;
-  let zoom = cropSpec.zoom ?? 1;
+export function drawCroppedPhoto(g, photo, dx, dy, tw, th, crop = {}) {
+  const sw0 = photo.naturalWidth || photo.width;
+  const sh0 = photo.naturalHeight || photo.height;
+  const fx = crop.fx ?? 0.5;
+  const fy = crop.fy ?? 0.4;
+  let zoom = crop.zoom ?? 1;
   zoom = Math.max(1, zoom);
-  const scale = Math.max(w / srcW, h / srcH) * zoom;
-  const sw = w / scale;
-  const sh = h / scale;
-  const ox = Math.max(0, Math.min(srcW - sw, fx * srcW - sw * 0.5));
-  const oy = Math.max(0, Math.min(srcH - sh, fy * srcH - sh * 0.5));
-  ctx.drawImage(img, ox, oy, sw, sh, destX, destY, w, h);
+  const scale = zoom * Math.max(tw / sw0, th / sh0);
+  const sw = tw / scale;
+  const sh = th / scale;
+  const ox = Math.max(0, Math.min(sw0 - sw, sw0 * fx - sw * 0.5));
+  const oy = Math.max(0, Math.min(sh0 - sh, sh0 * fy - sh * 0.5));
+  g.drawImage(photo, ox, oy, sw, sh, dx, dy, tw, th);
 }
