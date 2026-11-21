@@ -1,12 +1,12 @@
 @font-face {
   font-family: "Anton";
-  font-display: swap;
   src: url("./fonts/Anton-Regular.ttf") format("truetype");
+  font-display: swap;
 }
 @font-face {
   font-family: "Pacifico";
-  font-display: swap;
   src: url("./fonts/Pacifico-Regular.ttf") format("truetype");
+  font-display: swap;
 }
 
 * {
@@ -16,11 +16,24 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background-color: #14041f;
   color: #f5eef7;
+  background-color: #14041f;
+  font-family: system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.45;
-  font-family: system-ui, sans-serif;
+}
+
+/* Headings that share the poster-face resets live here, so the
+   individual rules below only carry what is unique to each one. */
+.logo,
+.topbar h1,
+.group h2 {
+  font-stretch: normal;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  letter-spacing: 1px;
+  line-height: normal;
 }
 
 .topbar {
@@ -29,8 +42,8 @@ body {
   justify-content: space-between;
   gap: 16px;
   padding: 12px 20px;
-  background-image: linear-gradient(90deg, #ff2e7e, #ff7a2f);
   border-bottom: 3px solid #0d0214;
+  background-image: linear-gradient(90deg, #ff2e7e, #ff7a2f);
 }
 .brand {
   display: flex;
@@ -50,24 +63,12 @@ body {
   color: #ffd23f;
   font-family: "Anton", sans-serif;
   font-size: 20px;
-  font-stretch: normal;
-  font-style: normal;
-  font-variant: normal;
-  font-weight: normal;
-  letter-spacing: 1px;
-  line-height: normal;
 }
 .topbar h1 {
   margin: 0;
   color: #fff;
   font-family: "Anton", sans-serif;
   font-size: 22px;
-  font-stretch: normal;
-  font-style: normal;
-  font-variant: normal;
-  font-weight: normal;
-  letter-spacing: 1px;
-  line-height: normal;
 }
 .topbar p {
   margin: 0;
@@ -110,12 +111,6 @@ body {
   color: #ffd23f;
   font-family: "Anton", sans-serif;
   font-size: 15px;
-  font-stretch: normal;
-  font-style: normal;
-  font-variant: normal;
-  font-weight: normal;
-  letter-spacing: 1px;
-  line-height: normal;
 }
 .group label {
   display: flex;
@@ -159,8 +154,8 @@ button:hover {
   background-color: #522464;
 }
 button:disabled {
-  opacity: 0.4;
   cursor: default;
+  opacity: 0.4;
 }
 button.primary {
   background-color: #ff2e7e;

@@ -6,8 +6,8 @@
 // out of the way — a local convenience, not a server for the public
 // internet.
 import { createServer } from "node:http";
-import { statSync, createReadStream } from "node:fs";
-import { sep, resolve, normalize, join, extname } from "node:path";
+import { createReadStream, statSync } from "node:fs";
+import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const appRoot = resolve(fileURLToPath(new URL("./app", import.meta.url)));
@@ -18,32 +18,42 @@ const port = Number.isInteger(chosen) && chosen > 0 && chosen < 65536 ? chosen :
 
 // MIME types by extension, kept as a plain lookup table.
 const TYPES = {
-  '.bin': 'application/octet-stream',
-  '.css': 'text/css; charset=utf-8',
-  '.gif': 'image/gif',
-  '.html': 'text/html; charset=utf-8',
-  '.ico': 'image/x-icon',
-  '.jpeg': 'image/jpeg',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.ttf': 'font/ttf',
+  '.otf': 'font/otf',
+  '.webp': 'image/webp',
+  '.png': 'image/png',
   '.jpg': 'image/jpeg',
-  '.js': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
   '.mp3': 'audio/mpeg',
   '.ogg': 'audio/ogg',
-  '.otf': 'font/otf',
-  '.png': 'image/png',
-  '.svg': 'image/svg+xml',
-  '.ttf': 'font/ttf',
-  '.txt': 'text/plain; charset=utf-8',
-  '.wasm': 'application/wasm',
   '.wav': 'audio/wav',
-  '.webp': 'image/webp',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
+  '.wasm': 'application/wasm',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.html': 'text/html; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.bin': 'application/octet-stream',
 };
 
 function mimeType(file) {
   return TYPES[extname(file).toLowerCase()] ?? "application/octet-stream";
+}
+
+// Resolves a request path inside appRoot, or null when it escapes.
+function resolveAppPath(pathname) {
+  const file = resolve(join(appRoot, normalize(pathname)));
+  const inside = file === appRoot || file.startsWith(appRoot + sep);
+  if (!inside) {
+    return null;
+  }
+  return file;
 }
 
 createServer((req, res) => {
@@ -55,10 +65,11 @@ createServer((req, res) => {
     res.writeHead(400).end("bad request");
     return;
   }
-  path = path.endsWith("/") ? path + "index.html" : path;
-  const file = resolve(join(appRoot, normalize(path)));
-  const ok = file === appRoot || file.startsWith(appRoot + sep);
-  if (!ok) {
+  if (path.endsWith("/")) {
+    path += "index.html";
+  }
+  const file = resolveAppPath(path);
+  if (file === null) {
     res.writeHead(403).end("forbidden");
     return;
   }
@@ -74,9 +85,9 @@ createServer((req, res) => {
   }
   const bytes = info.size;
   res.writeHead(200, {
-    "cache-control": "no-store",
-    "content-length": bytes,
     "content-type": mimeType(file),
+    "content-length": bytes,
+    "cache-control": "no-store",
   });
   createReadStream(file).pipe(res);
 }).listen(port, "127.0.0.1", () => {

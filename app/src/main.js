@@ -1,11 +1,12 @@
 // main.js — the editor behind Palm Heat Cover Studio.
 //
-// This module wires the whole studio: choosing and dropping in photos,
-// the bundled sample set, the layout and grade pickers, the caption
-// fields, per-panel cropping and positioning (click to select a panel,
-// drag to pan it, scroll to zoom), undo plus redo, and PNG export in
-// all three post sizes. A `?shot=` query in the URL swaps the editor
-// for a fixed screenshot scene instead — the scenes live in ./shots.js.
+// This module wires the whole studio: choosing and dropping in
+// photos, the bundled sample set, the layout and grade pickers, the
+// caption fields, per-panel cropping and positioning (click to select
+// a panel, drag to pan it, scroll to zoom), undo plus redo, and PNG
+// export in all three post sizes. A `?shot=` query in the URL swaps
+// the editor for a fixed screenshot scene instead — the scenes live
+// in ./shots.js.
 
 import { layoutPanels, panelCount, drawCoverGrid, exportCoverPNG, LAYOUTS, GRADES, EXPORT_SIZES } from "./cover.js";
 import { runShot } from "./shots.js";
@@ -13,30 +14,30 @@ import { runShot } from "./shots.js";
 // The sample photos the app ships with: {src, name} objects, name
 // being the label the strip shows under each thumbnail.
 const SAMPLE_SHOTS = [
-  { name: "Woman · convertible", src: "samples/woman.jpg" },
-  { name: "Fisherman · pier", src: "samples/fisherman.jpg" },
-  { name: "Friends · neon street", src: "samples/neon.jpg" },
-  { name: "Man · rooftop", src: "samples/rooftop.jpg" },
-  { name: "Boulevard · kit", src: "samples/boulevard.jpg" },
-  { name: "Pier · kit", src: "samples/pier.jpg" },
-  { name: "Orange car · deco street", src: "samples/car.jpg" },
-  { name: "Coast road · sunset", src: "samples/coast.jpg" },
-  { name: "Woman · sunset convertible", src: "samples/sunset.jpg" },
+  { src: "samples/woman.jpg", name: "Woman · convertible" },
+  { src: "samples/fisherman.jpg", name: "Fisherman · pier" },
+  { src: "samples/neon.jpg", name: "Friends · neon street" },
+  { src: "samples/rooftop.jpg", name: "Man · rooftop" },
+  { src: "samples/boulevard.jpg", name: "Boulevard · kit" },
+  { src: "samples/pier.jpg", name: "Pier · kit" },
+  { src: "samples/car.jpg", name: "Orange car · deco street" },
+  { src: "samples/coast.jpg", name: "Coast road · sunset" },
+  { src: "samples/sunset.jpg", name: "Woman · sunset convertible" },
 ];
 
 // Caption chips for the panels {place, time, line}, one per sample
 // photo. The wording is original — the same kind of location/time
 // chips the top-5 covers carry on theirs.
 const CAPTIONS = [
-  { line: "ENGINE RUNNING", place: "CORAL DRIVE", time: "6:47 PM" },
-  { line: "FIRST CAST", place: "PIER 26", time: "5:30 AM" },
-  { line: "NO BRAKES", place: "NEON MILE", time: "11:50 PM" },
-  { line: "CITY LIGHTS", place: "ROOFTOP 9", time: "8:30 PM" },
-  { line: "AFTER DARK", place: "PALM ROW", time: "9:15 PM" },
-  { line: "GOLDEN HOUR", place: "TOWER 2", time: "6:10 PM" },
-  { line: "TOP DOWN", place: "DECO ROW", time: "7:05 PM" },
-  { line: "LAST LIGHT", place: "COAST ROAD", time: "6:58 PM" },
-  { line: "GOLDEN HOUR", place: "CORAL DRIVE", time: "7:42 PM" },
+  { place: "CORAL DRIVE", time: "6:47 PM", line: "ENGINE RUNNING" },
+  { place: "PIER 26", time: "5:30 AM", line: "FIRST CAST" },
+  { place: "NEON MILE", time: "11:50 PM", line: "NO BRAKES" },
+  { place: "ROOFTOP 9", time: "8:30 PM", line: "CITY LIGHTS" },
+  { place: "PALM ROW", time: "9:15 PM", line: "AFTER DARK" },
+  { place: "TOWER 2", time: "6:10 PM", line: "GOLDEN HOUR" },
+  { place: "DECO ROW", time: "7:05 PM", line: "TOP DOWN" },
+  { place: "COAST ROAD", time: "6:58 PM", line: "LAST LIGHT" },
+  { place: "CORAL DRIVE", time: "7:42 PM", line: "GOLDEN HOUR" },
 ];
 
 // Default crop per panel, per layout. A crop is
@@ -76,69 +77,69 @@ const CAPTIONS = [
 // (drawCoverGrid, w === h).
 const DEFAULT_CROPS = {
   chaos: [
-    { fx: 0.42, fy: 0.32, photo: 8, zoom: 1.05 },
-    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.15 },
-    { fx: 0.55, fy: 0.42, photo: 2, zoom: 1.1 },
-    { fx: 0.48, fy: 0.28, photo: 3, sq: { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 }, zoom: 1 },
-    { fx: 0.48, fy: 0.3, photo: 1, zoom: 1 },
-    { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 },
+    { photo: 8, fx: 0.42, fy: 0.32, zoom: 1.05 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
+    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
+    { photo: 3, fx: 0.48, fy: 0.28, zoom: 1, sq: { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 } },
+    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
+    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
   ],
   "hero-vice": [
-    { fx: 0.42, fy: 0.32, photo: 0, zoom: 1.05 },
-    { fx: 0.48, fy: 0.3, photo: 3, zoom: 1.15 },
-    { fx: 0.55, fy: 0.42, photo: 2, zoom: 1.1 },
-    { fx: 0.48, fy: 0.3, photo: 1, zoom: 1 },
-    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.15 },
-    { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 },
+    { photo: 0, fx: 0.42, fy: 0.32, zoom: 1.05 },
+    { photo: 3, fx: 0.48, fy: 0.3, zoom: 1.15 },
+    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
+    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
+    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
   ],
   "vice-grid": [
-    { fx: 0.5, fy: 0.32, photo: 0, zoom: 1.15 },
-    { fx: 0.5, fy: 0.35, photo: 3, zoom: 1.1 },
-    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.15 },
-    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.05 },
-    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.15 },
-    { fx: 0.5, fy: 0.3, photo: 4, zoom: 1.25 },
-    { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 },
-    { fx: 0.72, fy: 0.45, photo: 2, zoom: 1.4 },
+    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.15 },
+    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.05 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
+    { photo: 4, fx: 0.5, fy: 0.3, zoom: 1.25 },
+    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
+    { photo: 2, fx: 0.72, fy: 0.45, zoom: 1.4 },
   ],
   "hero-three": [
-    { fx: 0.5, fy: 0.32, photo: 0, zoom: 1.05 },
-    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.1 },
-    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.2 },
-    { fx: 0.5, fy: 0.35, photo: 3, zoom: 1.15 },
+    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.05 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
+    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.15 },
   ],
   tilted: [
-    { fx: 0.5, fy: 0.32, photo: 0, zoom: 1.1 },
-    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.15 },
-    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.1 },
-    { fx: 0.5, fy: 0.35, photo: 3, zoom: 1.2 },
-    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.1 },
+    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
+    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.2 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.1 },
   ],
   "full-bleed": [
-    { fx: 0.5, fy: 0.35, photo: 0, zoom: 1.05 },
-    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.1 },
-    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.2 },
+    { photo: 0, fx: 0.5, fy: 0.35, zoom: 1.05 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
   ],
 };
 
 /** A fresh default state (screenshot scenes start from this as well). */
 export function defaultState() {
   return {
-    assignments: JSON.parse(JSON.stringify(DEFAULT_CROPS)),
-    captions: CAPTIONS.map((c) => ({ line: c.line, place: c.place, time: c.time })),
-    grade: "sunset",
-    heat: 5,
-    layout: "chaos",
-    onePhoto: false,
-    place: "CORAL BAY",
-    selectedPanel: 0,
-    showBarcode: true,
-    showCaptions: true,
-    showRibbon: true,
-    size: "landscape",
-    subtitle: "where the sun never sets",
-    tagline: "EVERY STREET HAS A STORY",
     title: "PALM HEAT",
+    subtitle: "where the sun never sets",
+    place: "CORAL BAY",
+    tagline: "EVERY STREET HAS A STORY",
+    layout: "chaos",
+    grade: "sunset",
+    size: "landscape",
+    heat: 5,
+    onePhoto: false,
+    showCaptions: true,
+    showBarcode: true,
+    showRibbon: true,
+    selectedPanel: 0,
+    assignments: JSON.parse(JSON.stringify(DEFAULT_CROPS)),
+    captions: CAPTIONS.map((c) => ({ ...c })),
   };
 }
 
@@ -159,8 +160,8 @@ export function loadImage(src) {
 /** Loads every sample photo; resolves once all are drawable. */
 export async function loadSamples() {
   photos.length = 0;
-  for (const p of SAMPLE_SHOTS) {
-    photos.push(await loadImage(p.src));
+  for (let i = 0; i < SAMPLE_SHOTS.length; i += 1) {
+    photos.push(await loadImage(SAMPLE_SHOTS[i].src));
   }
   return photos;
 }
@@ -173,43 +174,42 @@ let tiles = [];
 
 /** Serialises the editable part of the document for undo / redo. */
 function snapshotDoc() {
-  const { selectedPanel, ...keep } = doc;
+  const keep = { ...doc };
+  delete keep.selectedPanel;
   return JSON.stringify(keep);
 }
 
 function pushUndo() {
   past.push(snapshotDoc());
-  while (past.length > 40) {
-    past.shift();
-  }
+  past.splice(0, Math.max(0, past.length - 40));
   future = [];
   updateUndoButtons();
 }
 
 function applySnapshot(snap) {
   const saved = JSON.parse(snap);
-  for (const key of Object.keys(saved)) {
-    doc[key] = saved[key];
-  }
+  Object.entries(saved).forEach(([key, value]) => {
+    doc[key] = value;
+  });
   sync();
   paint();
 }
 
 export function undo() {
-  const snap = past.pop();
-  if (snap === undefined) {
+  if (past.length === 0) {
     return; // nothing to undo
   }
+  const snap = past.pop();
   future.push(snapshotDoc());
   applySnapshot(snap);
   updateUndoButtons();
 }
 
 export function redo() {
-  const snap = future.pop();
-  if (snap === undefined) {
+  if (future.length === 0) {
     return; // nothing to redo
   }
+  const snap = future.pop();
   past.push(snapshotDoc());
   applySnapshot(snap);
   updateUndoButtons();
@@ -218,16 +218,20 @@ export function redo() {
 function updateUndoButtons() {
   const u = document.querySelector("#undo");
   const r = document.querySelector("#redo");
-  if (u !== null) u.disabled = past.length === 0;
-  if (r !== null) r.disabled = future.length === 0;
+  if (u !== null) {
+    u.disabled = past.length === 0;
+  }
+  if (r !== null) {
+    r.disabled = future.length === 0;
+  }
 }
 
 /** Redraws the live preview at the selected post size. */
 export function paint() {
   const size = EXPORT_SIZES[doc.size];
+  cv.style.aspectRatio = size.w + " / " + size.h;
   cv.width = size.w;
   cv.height = size.h;
-  cv.style.aspectRatio = `${size.w} / ${size.h}`;
   const out = drawCoverGrid(cv, doc, photos);
   tiles = out.panels;
   drawSelected();
@@ -243,14 +247,14 @@ function drawSelected() {
   const pen = cv.getContext("2d");
   pen.save();
   pen.strokeStyle = "#ffd23f";
-  pen.lineWidth = Math.max(cv.width / 480, 3);
+  pen.lineWidth = Math.max(3, cv.width / 480);
   pen.setLineDash([18, 10]);
   pen.strokeRect(2 + sel.x, 2 + sel.y, sel.w - 4, sel.h - 4);
   pen.setLineDash([]);
   pen.fillStyle = "#ffd23f";
-  pen.font = "bold " + Math.max(cv.width / 64, 16) + "px sans-serif";
+  pen.font = "bold " + Math.max(16, cv.width / 64) + "px sans-serif";
   pen.textAlign = "left";
-  pen.fillText(`PANEL ${1 + doc.selectedPanel}`, 14 + sel.x, Math.max(cv.width / 48, 22) + sel.y);
+  pen.fillText(`PANEL ${1 + doc.selectedPanel}`, 14 + sel.x, Math.max(22, cv.width / 48) + sel.y);
   pen.restore();
 }
 
@@ -262,15 +266,15 @@ export function fillAllWithShot(shotIndex) {
   pushUndo();
   const xs = [0.5, 0.3, 0.7, 0.5, 0.25, 0.75, 0.5, 0.35];
   const ys = [0.32, 0.45, 0.4, 0.3, 0.5, 0.42, 0.6, 0.35];
-  for (const key of Object.keys(doc.assignments)) {
-    doc.assignments[key] = doc.assignments[key].map((c, i) => ({
+  Object.entries(doc.assignments).forEach(([key, list]) => {
+    doc.assignments[key] = list.map((c, i) => ({
       ...c,
+      photo: shotIndex,
       fx: xs[i % xs.length],
       fy: ys[i % ys.length],
-      photo: shotIndex,
       zoom: 1.25,
     }));
-  }
+  });
   paint();
 }
 
@@ -282,7 +286,11 @@ export function assignShotToSelected(shotIndex) {
   if (cell !== undefined) {
     cell.photo = shotIndex;
   }
-  doc.onePhoto ? fillAllWithShot(shotIndex) : paint();
+  if (doc.onePhoto) {
+    fillAllWithShot(shotIndex);
+  } else {
+    paint();
+  }
   renderShotStrip();
 }
 
@@ -298,28 +306,34 @@ export function cyclePanelShot() {
 function sync() {
   const fill = (id, value) => {
     const el = document.getElementById(id);
-    if (el !== null) el.value = value;
+    if (el !== null) {
+      el.value = value;
+    }
   };
   fill("title", doc.title);
   fill("subtitle", doc.subtitle);
   fill("place", doc.place);
   fill("tagline", doc.tagline);
-  for (const el of document.querySelectorAll("#layout-pick button")) {
+  document.querySelectorAll("#layout-pick button").forEach((el) => {
     el.classList.toggle("active", doc.layout === el.dataset.layout);
-  }
-  for (const el of document.querySelectorAll("#grade-pick button")) {
+  });
+  document.querySelectorAll("#grade-pick button").forEach((el) => {
     el.classList.toggle("active", doc.grade === el.dataset.grade);
-  }
-  for (const el of document.querySelectorAll("#size-pick button")) {
+  });
+  document.querySelectorAll("#size-pick button").forEach((el) => {
     el.classList.toggle("active", doc.size === el.dataset.size);
-  }
+  });
   document.querySelectorAll("#heat-pick button").forEach((el, n) => {
     el.classList.toggle("active", n < doc.heat);
   });
   const one = document.querySelector("#one-photo");
-  if (one !== null) one.checked = doc.onePhoto;
+  if (one !== null) {
+    one.checked = doc.onePhoto;
+  }
   const cap = document.querySelector("#captions");
-  if (cap !== null) cap.checked = doc.showCaptions !== false;
+  if (cap !== null) {
+    cap.checked = doc.showCaptions !== false;
+  }
   const zoom = document.getElementById("zoom");
   const cell = doc.assignments[doc.layout]?.[doc.selectedPanel];
   if (zoom !== null && cell !== undefined) {
@@ -335,7 +349,8 @@ function renderShotStrip() {
     return; // no strip on this page
   }
   el.innerHTML = "";
-  photos.forEach((img, idx) => {
+  for (let idx = 0; idx < photos.length; idx += 1) {
+    const img = photos[idx];
     const el2 = document.createElement("button");
     el2.type = "button";
     el2.className = "thumb";
@@ -351,7 +366,7 @@ function renderShotStrip() {
     }
     el2.addEventListener("click", () => assignShotToSelected(idx));
     el.appendChild(el2);
-  });
+  }
 }
 
 /** Downloads a blob as a file. */
@@ -373,15 +388,17 @@ export async function exportPNG(sizeKey) {
 
 /** Exports all three post sizes, one PNG each. */
 export async function exportAllSizes() {
-  for (const k of Object.keys(EXPORT_SIZES)) {
-    await exportPNG(k);
+  const keys = Object.keys(EXPORT_SIZES);
+  for (let i = 0; i < keys.length; i += 1) {
+    await exportPNG(keys[i]);
   }
   note.textContent = "All 3 sizes saved: 1920 × 1080, 1080 × 1350, 1080 × 1080";
 }
 
 /** Adds user files as photos (read locally only — never uploaded). */
 export async function addUserFiles(files) {
-  for (const f of files) {
+  for (let i = 0; i < files.length; i += 1) {
+    const f = files[i];
     if (f.type.startsWith("image/")) {
       const img = await loadImage(URL.createObjectURL(f));
       photos.push(img);
@@ -397,9 +414,7 @@ function tileAt(clientX, clientY) {
   const r = cv.getBoundingClientRect();
   const x = cv.width * ((clientX - r.left) / r.width);
   const y = cv.height * ((clientY - r.top) / r.height);
-  let i = tiles.length;
-  while (i > 0) {
-    i -= 1;
+  for (let i = tiles.length - 1; i >= 0; i -= 1) {
     const tile = tiles[i];
     if (x >= tile.x && x <= tile.x + tile.w && y >= tile.y && y <= tile.y + tile.h) {
       return i;
@@ -425,7 +440,7 @@ function bind() {
     drop.classList.remove("over");
     addUserFiles(Array.from(evt.dataTransfer.files));
   });
-  for (const el of document.querySelectorAll("#layout-pick button")) {
+  document.querySelectorAll("#layout-pick button").forEach((el) => {
     el.addEventListener("click", () => {
       pushUndo();
       doc.layout = el.dataset.layout;
@@ -433,22 +448,22 @@ function bind() {
       sync();
       paint();
     });
-  }
-  for (const el of document.querySelectorAll("#grade-pick button")) {
+  });
+  document.querySelectorAll("#grade-pick button").forEach((el) => {
     el.addEventListener("click", () => {
       pushUndo();
       doc.grade = el.dataset.grade;
       sync();
       paint();
     });
-  }
-  for (const el of document.querySelectorAll("#size-pick button")) {
+  });
+  document.querySelectorAll("#size-pick button").forEach((el) => {
     el.addEventListener("click", () => {
       doc.size = el.dataset.size;
       sync();
       paint();
     });
-  }
+  });
   document.querySelectorAll("#heat-pick button").forEach((el, n) => {
     el.addEventListener("click", () => {
       pushUndo();
@@ -502,7 +517,7 @@ function bind() {
     if (i >= 0) {
       doc.selectedPanel = i;
       const cell = doc.assignments[doc.layout]?.[i];
-      grab = { fx: cell.fx, fy: cell.fy, x: evt.clientX, y: evt.clientY };
+      grab = { x: evt.clientX, y: evt.clientY, fx: cell.fx, fy: cell.fy };
       cv.setPointerCapture(evt.pointerId);
       paint();
     }
@@ -533,7 +548,10 @@ function bind() {
     if (cell === undefined) {
       return; // no panel to zoom
     }
-    const factor = evt.deltaY < 0 ? 1.08 : 0.93;
+    let factor = 0.93;
+    if (evt.deltaY < 0) {
+      factor = 1.08;
+    }
     cell.zoom = Math.max(1, Math.min(3, cell.zoom * factor));
     const zoomEl = document.getElementById("zoom");
     if (zoomEl !== null) {
@@ -544,11 +562,13 @@ function bind() {
   document.addEventListener("keydown", (evt) => {
     const meta = evt.ctrlKey || evt.metaKey;
     const k = evt.key.toLowerCase();
-    if (meta && k === "z" && !evt.shiftKey) {
+    const undoKey = meta && k === "z" && !evt.shiftKey;
+    const redoKey = meta && (k === "y" || (k === "z" && evt.shiftKey));
+    if (undoKey) {
       evt.preventDefault();
       undo();
     }
-    if (meta && (k === "y" || (k === "z" && evt.shiftKey))) {
+    if (redoKey) {
       evt.preventDefault();
       redo();
     }
@@ -557,7 +577,9 @@ function bind() {
 
 const params = new URLSearchParams(window.location.search);
 const scene = params.get("shot");
-if (scene === null || scene === "") {
+if (scene !== null && scene !== "") {
+  runShot(scene, params, { state: doc, photos: photos, canvas: cv, loadImage: loadImage, loadSamplePhotos: loadSamples, renderPreview: paint, syncControls: sync, bindEditor: bind });
+} else {
   await document.fonts.ready;
   await document.fonts.load("40px Pacifico");
   await document.fonts.load("100px Anton");
@@ -565,6 +587,4 @@ if (scene === null || scene === "") {
   bind();
   sync();
   paint();
-} else {
-  runShot(scene, params, { bindEditor: bind, canvas: cv, loadImage: loadImage, loadSamplePhotos: loadSamples, photos: photos, renderPreview: paint, state: doc, syncControls: sync });
 }

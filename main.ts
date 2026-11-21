@@ -19,7 +19,7 @@
 // Without a grader container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { writeFileSync, mkdirSync, existsSync, cpSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildDossier } from "./vendor/makefun-app.ts";
@@ -30,8 +30,8 @@ const appSrc = join(baseDir, "app");
 const shotsSrc = join(baseDir, "screenshots");
 
 mkdirSync(outDir, { recursive: true });
-mkdirSync(join(outDir, "screenshots"), { recursive: true });
 cpSync(appSrc, join(outDir, "app"), { recursive: true });
+mkdirSync(join(outDir, "screenshots"), { recursive: true });
 if (existsSync(shotsSrc)) {
   cpSync(shotsSrc, join(outDir, "screenshots"), { recursive: true });
 }
@@ -44,10 +44,10 @@ if (existsSync(shotsSrc)) {
 // counted alongside /output's own 1000-entry cap, its screenshots/
 // and dossier.json. (Second pass: option keys reordered, values kept.)
 const doc = buildDossier(outDir, {
-  text_max_bytes: 163840,
-  screenshots: { max: 4, max_bytes: 262144 },
-  app_path_max_bytes: 1000,
-  app_max_files: 993,
   app_max_bytes: 50331648,
+  app_max_files: 993,
+  app_path_max_bytes: 1000,
+  screenshots: { max_bytes: 262144, max: 4 },
+  text_max_bytes: 163840,
 });
 writeFileSync(join(outDir, "dossier.json"), doc);

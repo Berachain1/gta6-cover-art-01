@@ -22,12 +22,12 @@ const STATE_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
 function copyQueryToState(q, state) {
-  for (const k of STATE_KEYS) {
+  STATE_KEYS.forEach((k) => {
     const v = q.get(k);
     if (v !== null && v !== "") {
       state[k] = v;
     }
-  }
+  });
   const sub = q.get("subtitle");
   if (sub !== null) {
     state.subtitle = sub;
@@ -51,7 +51,10 @@ async function renderCoverShot(q, kit) {
   copyQueryToState(q, kit.state);
   await ensureFaces();
   await kit.loadSamplePhotos();
-  const key = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
+  let key = kit.state.size;
+  if (key === undefined || key === "") {
+    key = "landscape";
+  }
   const dims = COVER_DIMS[key] ?? COVER_DIMS.landscape;
   kit.canvas.width = dims[0];
   kit.canvas.height = dims[1];
@@ -76,15 +79,22 @@ async function renderEditorShot(q, kit) {
 const SCENE_SIZES = { cover: null, portrait: "portrait", square: "square" };
 
 export async function runShot(scene, q, kit) {
-  if (scene === "editor") {
-    await renderEditorShot(q, kit);
-  } else if (scene === "cover" || scene === "portrait" || scene === "square") {
-    const size = SCENE_SIZES[scene];
-    if (size !== null) {
-      kit.state.size = size;
+  switch (scene) {
+    case "editor":
+      await renderEditorShot(q, kit);
+      break;
+    case "cover":
+    case "portrait":
+    case "square": {
+      const size = SCENE_SIZES[scene];
+      if (size !== null) {
+        kit.state.size = size;
+      }
+      await renderCoverShot(q, kit);
+      break;
     }
-    await renderCoverShot(q, kit);
-  } else {
-    window.__shotReady = true;
+    default:
+      window.__shotReady = true;
+      break;
   }
 }
