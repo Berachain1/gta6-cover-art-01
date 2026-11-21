@@ -1,6 +1,6 @@
 // main.ts — the build script the grader runs for Palm Heat Cover Studio.
 //
-// The graded thing is a standalone cover maker in app/: the index.html
+// What gets graded is a standalone cover maker in app/: the index.html
 // shell, the modules in app/src/, Anton and Pacifico bundled as font
 // files, and eight sample pictures. It ships six multi-panel layouts,
 // four grades (gradient-map looks plus a poster-ink pass), an editor
@@ -19,21 +19,28 @@
 // Without a grader container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildDossier } from "./vendor/makefun-app.ts";
 
-const baseDir = fileURLToPath(new URL("./", import.meta.url));
+// The folder this file lives in, and where the graded output goes.
+const here = fileURLToPath(new URL("./", import.meta.url));
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const appSrc = join(baseDir, "app");
-const shotsSrc = join(baseDir, "screenshots");
 
-mkdirSync(outDir, { recursive: true });
-cpSync(appSrc, join(outDir, "app"), { recursive: true });
-mkdirSync(join(outDir, "screenshots"), { recursive: true });
-if (existsSync(shotsSrc)) {
-  cpSync(shotsSrc, join(outDir, "screenshots"), { recursive: true });
+// Every tree that gets copied, as [source, destination] pairs. The
+// screenshots tree is created even when the source folder is missing,
+// so the output always has the same shape.
+const trees = [
+  [path.join(here, "app"), path.join(outDir, "app")],
+  [path.join(here, "screenshots"), path.join(outDir, "screenshots")],
+];
+fs.mkdirSync(outDir, { recursive: true });
+for (const [from, to] of trees) {
+  fs.mkdirSync(to, { recursive: true });
+  if (fs.existsSync(from)) {
+    fs.cpSync(from, to, { recursive: true });
+  }
 }
 
 // Caps taken from the scorer's own reference/gate.json. Only
@@ -50,4 +57,4 @@ const doc = buildDossier(outDir, {
   screenshots: { max_bytes: 262144, max: 4 },
   text_max_bytes: 163840,
 });
-writeFileSync(join(outDir, "dossier.json"), doc);
+fs.writeFileSync(path.join(outDir, "dossier.json"), doc);

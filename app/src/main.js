@@ -11,33 +11,46 @@
 import { layoutPanels, panelCount, drawCoverGrid, exportCoverPNG, LAYOUTS, GRADES, EXPORT_SIZES } from "./cover.js";
 import { runShot } from "./shots.js";
 
+
+// Builders for the data tables below: each returns the same object
+// the table used to spell out literally, so the tables read as rows.
+function shot(src, name) { return { src, name }; }
+function cap(place, time, line) { return { place, time, line }; }
+function crop(photo, fx, fy, zoom, sq) {
+  const c = { photo, fx, fy, zoom };
+  if (sq !== undefined) {
+    c.sq = { photo: sq[0], fx: sq[1], fy: sq[2], zoom: sq[3] };
+  }
+  return c;
+}
+
 // The sample photos the app ships with: {src, name} objects, name
 // being the label the strip shows under each thumbnail.
 const SAMPLE_SHOTS = [
-  { src: "samples/woman.jpg", name: "Woman · convertible" },
-  { src: "samples/fisherman.jpg", name: "Fisherman · pier" },
-  { src: "samples/neon.jpg", name: "Friends · neon street" },
-  { src: "samples/rooftop.jpg", name: "Man · rooftop" },
-  { src: "samples/boulevard.jpg", name: "Boulevard · kit" },
-  { src: "samples/pier.jpg", name: "Pier · kit" },
-  { src: "samples/car.jpg", name: "Orange car · deco street" },
-  { src: "samples/coast.jpg", name: "Coast road · sunset" },
-  { src: "samples/sunset.jpg", name: "Woman · sunset convertible" },
+  shot("samples/woman.jpg", "Woman · convertible"),
+  shot("samples/fisherman.jpg", "Fisherman · pier"),
+  shot("samples/neon.jpg", "Friends · neon street"),
+  shot("samples/rooftop.jpg", "Man · rooftop"),
+  shot("samples/boulevard.jpg", "Boulevard · kit"),
+  shot("samples/pier.jpg", "Pier · kit"),
+  shot("samples/car.jpg", "Orange car · deco street"),
+  shot("samples/coast.jpg", "Coast road · sunset"),
+  shot("samples/sunset.jpg", "Woman · sunset convertible"),
 ];
 
 // Caption chips for the panels {place, time, line}, one per sample
 // photo. The wording is original — the same kind of location/time
 // chips the top-5 covers carry on theirs.
 const CAPTIONS = [
-  { place: "CORAL DRIVE", time: "6:47 PM", line: "ENGINE RUNNING" },
-  { place: "PIER 26", time: "5:30 AM", line: "FIRST CAST" },
-  { place: "NEON MILE", time: "11:50 PM", line: "NO BRAKES" },
-  { place: "ROOFTOP 9", time: "8:30 PM", line: "CITY LIGHTS" },
-  { place: "PALM ROW", time: "9:15 PM", line: "AFTER DARK" },
-  { place: "TOWER 2", time: "6:10 PM", line: "GOLDEN HOUR" },
-  { place: "DECO ROW", time: "7:05 PM", line: "TOP DOWN" },
-  { place: "COAST ROAD", time: "6:58 PM", line: "LAST LIGHT" },
-  { place: "CORAL DRIVE", time: "7:42 PM", line: "GOLDEN HOUR" },
+  cap("CORAL DRIVE", "6:47 PM", "ENGINE RUNNING"),
+  cap("PIER 26", "5:30 AM", "FIRST CAST"),
+  cap("NEON MILE", "11:50 PM", "NO BRAKES"),
+  cap("ROOFTOP 9", "8:30 PM", "CITY LIGHTS"),
+  cap("PALM ROW", "9:15 PM", "AFTER DARK"),
+  cap("TOWER 2", "6:10 PM", "GOLDEN HOUR"),
+  cap("DECO ROW", "7:05 PM", "TOP DOWN"),
+  cap("COAST ROAD", "6:58 PM", "LAST LIGHT"),
+  cap("CORAL DRIVE", "7:42 PM", "GOLDEN HOUR"),
 ];
 
 // Default crop per panel, per layout. A crop is
@@ -77,48 +90,48 @@ const CAPTIONS = [
 // (drawCoverGrid, w === h).
 const DEFAULT_CROPS = {
   chaos: [
-    { photo: 8, fx: 0.42, fy: 0.32, zoom: 1.05 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
-    { photo: 3, fx: 0.48, fy: 0.28, zoom: 1, sq: { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 } },
-    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
+    crop(8, 0.42, 0.32, 1.05),
+    crop(6, 0.55, 0.55, 1.15),
+    crop(2, 0.55, 0.42, 1.1),
+    crop(3, 0.48, 0.28, 1, [7, 0.45, 0.55, 1.15]),
+    crop(1, 0.48, 0.3, 1),
+    crop(7, 0.45, 0.55, 1.15),
   ],
   "hero-vice": [
-    { photo: 0, fx: 0.42, fy: 0.32, zoom: 1.05 },
-    { photo: 3, fx: 0.48, fy: 0.3, zoom: 1.15 },
-    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
-    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
+    crop(0, 0.42, 0.32, 1.05),
+    crop(3, 0.48, 0.3, 1.15),
+    crop(2, 0.55, 0.42, 1.1),
+    crop(1, 0.48, 0.3, 1),
+    crop(6, 0.55, 0.55, 1.15),
+    crop(7, 0.45, 0.55, 1.15),
   ],
   "vice-grid": [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.15 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.05 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 4, fx: 0.5, fy: 0.3, zoom: 1.25 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
-    { photo: 2, fx: 0.72, fy: 0.45, zoom: 1.4 },
+    crop(0, 0.5, 0.32, 1.15),
+    crop(3, 0.5, 0.35, 1.1),
+    crop(1, 0.5, 0.35, 1.15),
+    crop(2, 0.5, 0.45, 1.05),
+    crop(6, 0.55, 0.55, 1.15),
+    crop(4, 0.5, 0.3, 1.25),
+    crop(7, 0.45, 0.55, 1.15),
+    crop(2, 0.72, 0.45, 1.4),
   ],
   "hero-three": [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.05 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.15 },
+    crop(0, 0.5, 0.32, 1.05),
+    crop(2, 0.5, 0.45, 1.1),
+    crop(1, 0.5, 0.35, 1.2),
+    crop(3, 0.5, 0.35, 1.15),
   ],
   tilted: [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.2 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.1 },
+    crop(0, 0.5, 0.32, 1.1),
+    crop(1, 0.5, 0.35, 1.15),
+    crop(2, 0.5, 0.45, 1.1),
+    crop(3, 0.5, 0.35, 1.2),
+    crop(6, 0.55, 0.55, 1.1),
   ],
   "full-bleed": [
-    { photo: 0, fx: 0.5, fy: 0.35, zoom: 1.05 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
+    crop(0, 0.5, 0.35, 1.05),
+    crop(2, 0.5, 0.45, 1.1),
+    crop(1, 0.5, 0.35, 1.2),
   ],
 };
 
@@ -181,7 +194,7 @@ function snapshotDoc() {
 
 function pushUndo() {
   past.push(snapshotDoc());
-  past.splice(0, Math.max(0, past.length - 40));
+  past.splice(0, Math.max(past.length - 40, 0));
   future = [];
   updateUndoButtons();
 }
@@ -247,14 +260,14 @@ function drawSelected() {
   const pen = cv.getContext("2d");
   pen.save();
   pen.strokeStyle = "#ffd23f";
-  pen.lineWidth = Math.max(3, cv.width / 480);
+  pen.lineWidth = Math.max(cv.width / 480, 3);
   pen.setLineDash([18, 10]);
   pen.strokeRect(2 + sel.x, 2 + sel.y, sel.w - 4, sel.h - 4);
   pen.setLineDash([]);
   pen.fillStyle = "#ffd23f";
-  pen.font = "bold " + Math.max(16, cv.width / 64) + "px sans-serif";
+  pen.font = "bold " + Math.max(cv.width / 64, 16) + "px sans-serif";
   pen.textAlign = "left";
-  pen.fillText(`PANEL ${1 + doc.selectedPanel}`, 14 + sel.x, Math.max(22, cv.width / 48) + sel.y);
+  pen.fillText(`PANEL ${1 + doc.selectedPanel}`, 14 + sel.x, Math.max(cv.width / 48, 22) + sel.y);
   pen.restore();
 }
 
@@ -530,8 +543,8 @@ function bind() {
       if (cell !== undefined && p !== undefined) {
         const dx = ((evt.clientX - grab.x) / r.width) * (cv.width / p.w);
         const dy = ((evt.clientY - grab.y) / r.height) * (cv.height / p.h);
-        cell.fx = Math.max(0, Math.min(1, grab.fx - dx));
-        cell.fy = Math.max(0, Math.min(1, grab.fy - dy));
+        cell.fx = Math.max(Math.min(grab.fx - dx, 1), 0);
+        cell.fy = Math.max(Math.min(grab.fy - dy, 1), 0);
         paint();
       }
     }
@@ -552,7 +565,7 @@ function bind() {
     if (evt.deltaY < 0) {
       factor = 1.08;
     }
-    cell.zoom = Math.max(1, Math.min(3, cell.zoom * factor));
+    cell.zoom = Math.max(Math.min(cell.zoom * factor, 3), 1);
     const zoomEl = document.getElementById("zoom");
     if (zoomEl !== null) {
       zoomEl.value = cell.zoom;

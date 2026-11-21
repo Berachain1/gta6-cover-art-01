@@ -57,46 +57,46 @@ export const GRADES = {
 // pill straddles the panel/title boundary, and every panel carries a
 // location/time caption chip.
 function heroVicePanels(w, h, g, tall) {
-  const bandPx = h * 0.3;
-  const footPx = h * 0.075;
+  const bandPx = 0.3 * h;
+  const footPx = 0.075 * h;
   const topPx = h - bandPx - footPx - 4 * g;
-  const titleY = g + topPx + g;
-  const footY = titleY + bandPx + g;
-  const footRect = { x: g, y: footY, w: w - 2 * g, h: h - footY - g };
+  const titleY = topPx + g + g;
+  const footY = bandPx + titleY + g;
+  const footRect = { x: g, y: footY, w: w - g * 2, h: h - footY - g };
   const tiles = [];
   if (tall) {
-    const leadHeight = topPx * 0.6;
-    tiles.push({ x: g, y: g, w: w - 2 * g, h: leadHeight });
+    const leadHeight = 0.6 * topPx;
+    tiles.push({ x: g, y: g, w: w - g * 2, h: leadHeight });
     const colW = (w - 4 * g) / 3;
     const rowH = topPx - leadHeight - g;
     for (let ci = 0; ci < 3; ci += 1) {
-      tiles.push({ x: g + ci * (colW + g), y: g + leadHeight + g, w: colW, h: rowH });
+      tiles.push({ x: ci * (colW + g) + g, y: leadHeight + g + g, w: colW, h: rowH });
     }
     return {
       burst: { x: 76, y: 76 },
       tiles,
       foot: footRect,
-      mast: { x: g, y: titleY, w: w - 2 * g, h: bandPx, kind: "hero" },
+      mast: { x: g, y: titleY, w: w - g * 2, h: bandPx, kind: "hero" },
     };
   }
-  const leadWidth = 0.46 * w - g;
-  const midW = 0.235 * w - g;
-  const rightW = 0.305 * w - 2 * g;
-  const midX = g + leadWidth + g;
-  const rightX = midX + midW + g;
+  const leadWidth = w * 0.46 - g;
+  const midW = w * 0.235 - g;
+  const rightW = w * 0.305 - g * 2;
+  const midX = g + g + leadWidth;
+  const rightX = midW + midX + g;
   tiles.push({ x: g, y: g, w: leadWidth, h: topPx });
   const midH = (topPx - g) / 2;
   tiles.push({ x: midX, y: g, w: midW, h: midH });
-  tiles.push({ x: midX, y: g + midH + g, w: midW, h: midH });
-  const rowH = (topPx - 2 * g) / 3;
+  tiles.push({ x: midX, y: midH + g + g, w: midW, h: midH });
+  const rowH = (topPx - g * 2) / 3;
   for (let ri = 0; ri < 3; ri += 1) {
-    tiles.push({ x: rightX, y: g + ri * (rowH + g), w: rightW, h: rowH });
+    tiles.push({ x: rightX, y: ri * (rowH + g) + g, w: rightW, h: rowH });
   }
   return {
-    burst: { x: g + 64, y: g + 64 },
+    burst: { x: 64 + g, y: 64 + g },
     tiles,
     foot: footRect,
-    mast: { x: g, y: titleY, w: w - 2 * g, h: bandPx, kind: "hero" },
+    mast: { x: g, y: titleY, w: w - g * 2, h: bandPx, kind: "hero" },
   };
 }
 
@@ -109,50 +109,50 @@ function heroVicePanels(w, h, g, tall) {
 // of a corner. `fugitive` is the top-right anchor of the fisherman
 // panel for the WANTED pill.
 function chaosPanels(w, h, g, tall) {
-  const footPx = h * 0.075;
+  const footPx = 0.075 * h;
   const footY = h - footPx - g;
-  const footRect = { x: g, y: footY, w: w - 2 * g, h: h - footY - g };
+  const footRect = { x: g, y: footY, w: w - g * 2, h: h - footY - g };
   const tiles = [];
-  let mastH = 0.38 * h;
+  let mastH = h * 0.38;
   if (tall) {
-    mastH = 0.34 * h;
+    mastH = h * 0.34;
   }
-  const mast = { x: 0, y: 0.5 * h, w, h: mastH, kind: "chaos" };
+  const mast = { x: 0, y: h * 0.5, w, h: mastH, kind: "chaos" };
   if (tall) {
-    const tallH = 0.44 * h;
-    tiles.push({ x: g, y: g, w: w - 2 * g, h: tallH, slant: 30 });
+    const tallH = h * 0.44;
+    tiles.push({ x: g, y: g, w: w - g * 2, h: tallH, slant: 30 });
     const colW = (w - 4 * g) / 3;
     // The row runs down to the photo bottom (0.88h) so photos fill
     // behind the title all the way to the strip — a short row left a
     // black scrim void under the title in portrait/square.
-    const rowTop = g + tallH + g;
-    const rowH = 0.88 * h - rowTop;
+    const rowTop = tallH + g + g;
+    const rowH = h * 0.88 - rowTop;
     tiles.push({ x: g, y: rowTop, w: colW, h: rowH, rot: -0.02 });
-    tiles.push({ x: g + colW + g, y: rowTop, w: colW, h: rowH });
-    tiles.push({ x: g + 2 * (colW + g), y: rowTop, w: colW, h: rowH, rot: 0.025 });
+    tiles.push({ x: colW + g + g, y: rowTop, w: colW, h: rowH });
+    tiles.push({ x: 2 * (colW + g) + g, y: rowTop, w: colW, h: rowH, rot: 0.025 });
     return {
-      burst: { x: 0.66 * w, y: g + tallH + g },
+      burst: { x: w * 0.66, y: tallH + g + g },
       tiles,
       foot: footRect,
       mast,
-      fugitive: { x: g + 3 * colW + 2 * g, y: rowTop },
+      fugitive: { x: g + 3 * colW + g * 2, y: rowTop },
     };
   }
-  const floor = 0.88 * h;
+  const floor = h * 0.88;
   const top = floor - g;
   const leadWidth = 0.44 * w - g;
-  const midX = g + leadWidth + g;
+  const midX = g + g + leadWidth;
   const midW = 0.24 * w - g;
-  const rightX = midX + midW + g;
+  const rightX = midW + midX + g;
   const rightW = w - rightX - g;
   tiles.push({ x: g, y: g, w: leadWidth, h: top, slant: 36 });
   const midH = (top - g) / 2;
   tiles.push({ x: midX, y: g, w: midW, h: midH, rot: 0.02 });
-  tiles.push({ x: midX, y: g + midH + g, w: midW, h: midH, rot: -0.015 });
-  const rowH = (top - 2 * g) / 3;
+  tiles.push({ x: midX, y: midH + g + g, w: midW, h: midH, rot: -0.015 });
+  const rowH = (top - g * 2) / 3;
   tiles.push({ x: rightX, y: g, w: rightW, h: rowH, rot: -0.03 });
-  tiles.push({ x: rightX, y: g + rowH + g, w: rightW, h: rowH, rot: 0.025 });
-  tiles.push({ x: rightX, y: g + 2 * (rowH + g), w: rightW, h: rowH, rot: -0.02 });
+  tiles.push({ x: rightX, y: rowH + g + g, w: rightW, h: rowH, rot: 0.025 });
+  tiles.push({ x: rightX, y: 2 * (rowH + g) + g, w: rightW, h: rowH, rot: -0.02 });
   return {
     // Starburst on the hero/mid-column junction up where no caption
     // chip lives (the old junction sat on the fisherman's chip), and
@@ -162,7 +162,7 @@ function chaosPanels(w, h, g, tall) {
     tiles,
     foot: footRect,
     mast,
-    fugitive: { x: rightX + rightW, y: g + rowH + g },
+    fugitive: { x: rightX + rightW, y: rowH + g + g },
   };
 }
 
@@ -170,17 +170,17 @@ function viceGridPanels(w, h, g, tall) {
   const tiles = [];
   if (tall) {
     const colW = (w - 3 * g) / 2;
-    const rowH = (0.62 * h - 4 * g) / 3;
+    const rowH = (h * 0.62 - 4 * g) / 3;
     for (let ri = 0; ri < 3; ri += 1) {
       for (let ci = 0; ci < 2; ci += 1) {
-        tiles.push({ x: g + ci * (colW + g), y: g + ri * (rowH + g), w: colW, h: rowH });
+        tiles.push({ x: ci * (colW + g) + g, y: ri * (rowH + g) + g, w: colW, h: rowH });
       }
     }
     const titleY = g + 3 * (rowH + g);
     return {
       burst: { x: 76, y: 76 },
       tiles,
-      mast: { x: g, y: titleY, w: w - 2 * g, h: h - titleY - g, kind: "band" },
+      mast: { x: g, y: titleY, w: w - g * 2, h: h - titleY - g, kind: "band" },
     };
   }
   const colW = (w - 4 * g) / 3;
@@ -190,12 +190,12 @@ function viceGridPanels(w, h, g, tall) {
       if (ri === 1 && ci === 1) {
         // centre cell is the title block
       } else {
-        tiles.push({ x: g + ci * (colW + g), y: g + ri * (rowH + g), w: colW, h: rowH });
+        tiles.push({ x: ci * (colW + g) + g, y: ri * (rowH + g) + g, w: colW, h: rowH });
       }
     }
   }
   return {
-    burst: { x: g + 64, y: g + 64 },
+    burst: { x: 64 + g, y: 64 + g },
     tiles,
     mast: { x: g + (colW + g), y: g + (rowH + g), w: colW, h: rowH, kind: "cell" },
   };
@@ -204,31 +204,31 @@ function viceGridPanels(w, h, g, tall) {
 function heroThreePanels(w, h, g, tall) {
   const tiles = [];
   if (tall) {
-    const tallH = 0.44 * h;
-    tiles.push({ x: g, y: g, w: w - 2 * g, h: tallH });
+    const tallH = h * 0.44;
+    tiles.push({ x: g, y: g, w: w - g * 2, h: tallH });
     const colW = (w - 4 * g) / 3;
     const rowH = 0.2 * h;
     for (let ci = 0; ci < 3; ci += 1) {
-      tiles.push({ x: g + ci * (colW + g), y: tallH + 2 * g, w: colW, h: rowH });
+      tiles.push({ x: ci * (colW + g) + g, y: tallH + g * 2, w: colW, h: rowH });
     }
     const titleY = tallH + rowH + 3 * g;
     return {
       burst: { x: 76, y: 76 },
       tiles,
-      mast: { x: g, y: titleY, w: w - 2 * g, h: h - titleY - g, kind: "band" },
+      mast: { x: g, y: titleY, w: w - g * 2, h: h - titleY - g, kind: "band" },
     };
   }
   const leadWidth = 0.56 * w;
-  tiles.push({ x: g, y: g, w: leadWidth - g, h: h - 2 * g });
-  const restW = w - leadWidth - 2 * g;
+  tiles.push({ x: g, y: g, w: leadWidth - g, h: h - g * 2 });
+  const restW = w - leadWidth - g * 2;
   const rowH = (h - 4 * g) / 3;
   for (let ri = 0; ri < 3; ri += 1) {
-    tiles.push({ x: leadWidth + g, y: g + ri * (rowH + g), w: restW, h: rowH });
+    tiles.push({ x: g + leadWidth, y: ri * (rowH + g) + g, w: restW, h: rowH });
   }
   return {
     burst: { x: 78, y: 54 },
     tiles,
-    mast: { x: g, y: 0.66 * h, w: w - 2 * g, h: 0.34 * h - g, kind: "overlap" },
+    mast: { x: g, y: h * 0.66, w: w - g * 2, h: h * 0.34 - g, kind: "overlap" },
   };
 }
 
@@ -236,21 +236,21 @@ function tiltedPanels(w, h, g, tall) {
   const tiles = [];
   if (tall) {
     const tallH = 0.4 * h;
-    tiles.push({ x: g, y: g, w: w - 2 * g, h: tallH, slant: 40 });
+    tiles.push({ x: g, y: g, w: w - g * 2, h: tallH, slant: 40 });
     const colW = (w - 3 * g) / 2;
     const rowH = 0.24 * h;
-    tiles.push({ x: g, y: tallH + 2 * g, w: colW, h: rowH, slant: -30 });
-    tiles.push({ x: g + colW + g, y: tallH + 2 * g, w: colW, h: rowH, slant: 30 });
+    tiles.push({ x: g, y: tallH + g * 2, w: colW, h: rowH, slant: -30 });
+    tiles.push({ x: colW + g + g, y: tallH + g * 2, w: colW, h: rowH, slant: 30 });
     const titleY = tallH + rowH + 3 * g;
     return {
       burst: { x: 76, y: 76 },
       tiles,
-      mast: { x: g, y: titleY, w: w - 2 * g, h: h - titleY - g, kind: "band" },
+      mast: { x: g, y: titleY, w: w - g * 2, h: h - titleY - g, kind: "band" },
     };
   }
   const leadWidth = 0.5 * w;
-  tiles.push({ x: g, y: g, w: leadWidth, h: 0.62 * h, slant: 46 });
-  tiles.push({ x: leadWidth + g, y: g, w: w - leadWidth - 2 * g, h: 0.62 * h, slant: -46 });
+  tiles.push({ x: g, y: g, w: leadWidth, h: h * 0.62, slant: 46 });
+  tiles.push({ x: g + leadWidth, y: g, w: w - leadWidth - g * 2, h: h * 0.62, slant: -46 });
   const botW = (w - 4 * g) / 3;
   for (let ci = 0; ci < 3; ci += 1) {
     let slant = -26;
@@ -259,10 +259,10 @@ function tiltedPanels(w, h, g, tall) {
     } else if (ci === 0) {
       slant = 26;
     }
-    tiles.push({ x: g + ci * (botW + g), y: 0.62 * h + g, w: botW, h: 0.38 * h - 2 * g, slant });
+    tiles.push({ x: g + ci * (botW + g), y: h * 0.62 + g, w: botW, h: h * 0.38 - 2 * g, slant });
   }
   return {
-    burst: { x: g + 64, y: g + 64 },
+    burst: { x: 64 + g, y: 64 + g },
     tiles,
     mast: { x: 0.22 * w, y: 0.42 * h, w: 0.56 * w, h: 0.3 * h, kind: "overlap" },
   };
@@ -272,16 +272,16 @@ function tiltedPanels(w, h, g, tall) {
 function fullBleedPanels(w, h, g, tall) {
   const tiles = [];
   if (tall) {
-    tiles.push({ x: 0, y: 0, w, h: 0.72 * h });
+    tiles.push({ x: 0, y: 0, w, h: h * 0.72 });
     tiles.push({ x: g, y: 0.52 * h, w: 0.42 * w, h: 0.2 * h, snap: true });
     return {
       burst: { x: 76, y: 76 },
       tiles,
-      mast: { x: 0, y: 0.72 * h, w, h: 0.28 * h, kind: "band" },
+      mast: { x: 0, y: h * 0.72, w, h: h * 0.28, kind: "band" },
     };
   }
   tiles.push({ x: 0, y: 0, w, h });
-  tiles.push({ x: 0.66 * w, y: 2 * g, w: 0.3 * w, h: 0.34 * h, snap: true });
+  tiles.push({ x: w * 0.66, y: g * 2, w: w * 0.3, h: h * 0.34, snap: true });
   tiles.push({ x: 0.04 * w, y: 0.06 * h, w: 0.24 * w, h: 0.3 * h, snap: true });
   return {
     burst: { x: 0.5 * w, y: 60 },
@@ -412,7 +412,7 @@ export function drawHeatStars(pen, cx, y, size, heat, fill = "#ffd23f", stroke =
   pen.textBaseline = "middle";
   pen.font = size + "px sans-serif";
   const gap = size * 1.15;
-  const startX = cx - 2 * gap;
+  const startX = cx - gap * 2;
   const slots = [0, 1, 2, 3, 4];
   slots.forEach((i) => {
     pen.fillStyle = i < heat ? fill : "rgba(255,255,255,0.28)";
@@ -442,7 +442,7 @@ export function drawBarcode(pen, x, y, w, h, seedText) {
     v = (v * 16807) % 2147483647;
     barW = 1 + (v % 4) * (w / 220);
     if (v % 3 !== 0) {
-      pen.fillRect(barX, y + h * 0.08, barW, h * 0.72);
+      pen.fillRect(barX, y + 0.08 * h, barW, 0.72 * h);
     }
     barX += barW + w / 220;
   }
@@ -638,7 +638,7 @@ export function drawTitleBlock(pen, rect, doc) {
   // title crashes over photos.
   let capPx;
   if (kind === "chaos") {
-    capPx = h * 0.72;
+    capPx = 0.72 * h;
   } else if (kind === "hero") {
     capPx = h * 0.66;
   } else {
@@ -801,7 +801,7 @@ export function drawBottomStrip(pen, rect, doc) {
   pen.beginPath();
   pen.rect(x, y, w, h);
   pen.clip();
-  const palmS = (h * 0.72) / 110;
+  const palmS = (0.72 * h) / 110;
   const palmSpots = [[0.02, 1], [0.055, 0.8], [0.09, 0.6], [0.885, 0.7]];
   palmSpots.forEach(([fx, sc]) => {
     drawPalmSilhouette(pen, x + w * fx, y + h - 2, palmS * sc, "rgba(20,4,31,0.9)");
@@ -810,7 +810,7 @@ export function drawBottomStrip(pen, rect, doc) {
   // Tagline, centred, with the fine print under it.
   pen.textAlign = "center";
   pen.textBaseline = "alphabetic";
-  const tagPx = Math.max(12, h * 0.3);
+  const tagPx = Math.max(12, 0.3 * h);
   pen.font = tagPx + "px Anton, sans-serif";
   pen.fillStyle = "#ffffff";
   const slogan = doc.tagline ?? "";
@@ -1110,7 +1110,7 @@ export function drawCoverGrid(canvas, doc, photos) {
   const wantBarcode = doc.showBarcode !== false && mast.kind !== "cell" && mast.kind !== "hero";
   if (wantBarcode) {
     const name = doc.title !== undefined && doc.title !== "" ? doc.title : "PALM HEAT";
-    drawBarcode(pen, cw - cw * 0.09 - GUTTER, ch - ch * 0.075, cw * 0.09, ch * 0.055, name);
+    drawBarcode(pen, cw - cw * 0.09 - GUTTER, ch - 0.075 * ch, cw * 0.09, ch * 0.055, name);
   }
   return { panels: tiles, strip: foot, title: mast };
 }

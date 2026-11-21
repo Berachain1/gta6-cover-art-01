@@ -29,46 +29,47 @@ function clampNum(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
 }
 
-// Palette stops per grade, as {at, r, g, b} stops the lookup reads.
+// Palette stops per grade, as [at, r, g, b] rows the lookup reads.
 export const GRADE_PALETTES = {
   sunset: [
-    { at: 0, r: 26, g: 8, b: 46 },
-    { at: 0.28, r: 100, g: 40, b: 70 },
-    { at: 0.55, r: 220, g: 130, b: 80 },
-    { at: 0.78, r: 250, g: 160, b: 90 },
-    { at: 1, r: 255, g: 210, b: 63 },
+    [0, 26, 8, 46],
+    [0.28, 100, 40, 70],
+    [0.55, 220, 130, 80],
+    [0.78, 250, 160, 90],
+    [1, 255, 210, 63],
   ],
   neon: [
-    { at: 0, r: 10, g: 8, b: 48 },
-    { at: 0.3, r: 74, g: 20, b: 120 },
-    { at: 0.55, r: 168, g: 38, b: 150 },
-    { at: 0.78, r: 255, g: 64, b: 160 },
-    { at: 1, r: 64, g: 224, b: 208 },
+    [0, 10, 8, 48],
+    [0.3, 74, 20, 120],
+    [0.55, 168, 38, 150],
+    [0.78, 255, 64, 160],
+    [1, 64, 224, 208],
   ],
   golden: [
-    { at: 0, r: 40, g: 20, b: 8 },
-    { at: 0.3, r: 122, g: 62, b: 18 },
-    { at: 0.55, r: 214, g: 122, b: 32 },
-    { at: 0.8, r: 255, g: 176, b: 64 },
-    { at: 1, r: 255, g: 236, b: 160 },
+    [0, 40, 20, 8],
+    [0.3, 122, 62, 18],
+    [0.55, 214, 122, 32],
+    [0.8, 255, 176, 64],
+    [1, 255, 236, 160],
   ],
   // Warm mids on purpose — coral-orange at 0.55, not magenta-pink —
   // so skin in the poster-ink pass reads sun-warmed instead of purple.
   ink: [
-    { at: 0, r: 22, g: 6, b: 38 },
-    { at: 0.3, r: 132, g: 38, b: 62 },
-    { at: 0.55, r: 224, g: 72, b: 84 },
-    { at: 0.78, r: 255, g: 138, b: 58 },
-    { at: 1, r: 255, g: 214, b: 92 },
+    [0, 22, 6, 38],
+    [0.3, 132, 38, 62],
+    [0.55, 224, 72, 84],
+    [0.78, 255, 138, 58],
+    [1, 255, 214, 92],
   ],
 };
 
-// The two palette stops bracketing `pos` (0..1) in `ramp`.
+// The two palette stops bracketing `pos` (0..1) in `ramp`. Each stop
+// is [at, r, g, b], so index 0 is the position and 1..3 are colours.
 function findStops(ramp, pos) {
   let low = ramp[0];
   let high = ramp[ramp.length - 1];
   for (let k = 0; k + 1 < ramp.length; k++) {
-    if (pos < ramp[k].at || pos > ramp[k + 1].at) {
+    if (pos < ramp[k][0] || pos > ramp[k + 1][0]) {
       continue;
     }
     low = ramp[k];
@@ -86,17 +87,18 @@ function findStops(ramp, pos) {
 export function buildGradeLUT(grade, strength = 0.62) {
   const ramp = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
   const table = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
-  const chans = ["r", "g", "b"];
+  const chanNames = ["r", "g", "b"];
   for (let val = 0; val < 256; val++) {
     const pos = val / 255;
     const [low, high] = findStops(ramp, pos);
-    const gap = high.at - low.at;
+    const gap = high[0] - low[0];
     let mix = 0;
     if (gap !== 0) {
-      mix = (pos - low.at) / gap;
+      mix = (pos - low[0]) / gap;
     }
-    chans.forEach((chan) => {
-      const col = low[chan] + (high[chan] - low[chan]) * mix;
+    chanNames.forEach((chan, idx) => {
+      const stopIdx = idx + 1;
+      const col = low[stopIdx] + (high[stopIdx] - low[stopIdx]) * mix;
       table[chan][val] = Math.round(val + (col - val) * strength);
     });
   }
@@ -271,8 +273,8 @@ export function applyGrain(pen, w, h, alpha = 0.07) {
 /** Darkens the corners of a panel so it reads like a printed poster. */
 export function applyVignette(pen, w, h, amt = 0.28) {
   const grad = pen.createRadialGradient(
-    w * 0.5, h * 0.5, Math.min(w, h) * 0.32,
-    w * 0.5, h * 0.5, Math.max(w, h) * 0.72,
+    0.5 * w, 0.5 * h, 0.32 * Math.min(w, h),
+    0.5 * w, 0.5 * h, 0.72 * Math.max(w, h),
   );
   grad.addColorStop(0, "rgba(10,2,20,0)");
   grad.addColorStop(1, "rgba(10,2,20," + amt + ")");
