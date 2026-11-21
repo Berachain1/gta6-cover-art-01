@@ -11,18 +11,18 @@
 import { drawCoverGrid } from "./cover.js";
 
 // Post sizes for the cover scene: [width, height] in pixels.
-const SIZE_MAP = {
+const POST_SIZES = {
   portrait: [1080, 1350],
   square: [1080, 1080],
   landscape: [1920, 1080],
 };
 
 // Query keys copied straight onto state fields, in order.
-const PARAM_KEYS = ["layout", "grade", "title", "size"];
+const QUERY_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
 function applyQueryParams(q, state) {
-  for (const k of PARAM_KEYS) {
+  for (const k of QUERY_KEYS) {
     const v = q.get(k);
     if (v !== null && v !== "") {
       state[k] = v;
@@ -41,8 +41,8 @@ async function loadFaces() {
   // loading (nothing on the page uses them until the canvas does), and
   // a draw that measures with the fallback font comes out small — so
   // load both faces explicitly before anything is measured or drawn.
-  await document.fonts.load("100px Anton");
-  await document.fonts.load("40px Pacifico");
+  await document.fonts.load('100px Anton');
+  await document.fonts.load('40px Pacifico');
 }
 
 /** Paints the cover scene onto the page canvas at the post size. */
@@ -51,10 +51,10 @@ async function paintCoverScene(q, kit) {
   applyQueryParams(q, kit.state);
   await loadFaces();
   await kit.loadSamplePhotos();
-  const sizeKey = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
-  const wh = SIZE_MAP[sizeKey] ?? SIZE_MAP.landscape;
-  kit.canvas.width = wh[0];
-  kit.canvas.height = wh[1];
+  const key = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
+  const dims = POST_SIZES[key] ?? POST_SIZES.landscape;
+  kit.canvas.width = dims[0];
+  kit.canvas.height = dims[1];
   drawCoverGrid(kit.canvas, kit.state, kit.photos);
   document.title = "READY";
   window.__shotReady = true;

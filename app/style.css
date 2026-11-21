@@ -11,11 +11,13 @@
 
 html,
 body {
-  margin: 0;
+  margin: 0px;
   min-height: 100%;
-  background: #14041f;
+  background-color: #14041f;
   color: #f5eef7;
-  font: 15px/1.45 system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  font-family: system-ui, sans-serif;
 }
 * {
   box-sizing: border-box;
@@ -26,9 +28,11 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 20px;
-  background: linear-gradient(90deg, #ff2e7e, #ff7a2f);
-  border-bottom: 3px solid #0d0214;
+  padding: 12px 20px 12px;
+  background-image: linear-gradient(90deg, #ff2e7e, #ff7a2f);
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  border-bottom-color: #0d0214;
 }
 .brand {
   display: flex;
@@ -38,24 +42,37 @@ body {
 }
 .logo {
   display: grid;
-  place-items: center;
+  align-items: center;
+  justify-items: center;
   flex: none;
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #14041f;
+  background-color: #14041f;
   color: #ffd23f;
-  font: 20px "Anton", sans-serif;
+  font-size: 20px;
+  line-height: normal;
+  font-family: "Anton", sans-serif;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  font-stretch: normal;
   letter-spacing: 1px;
 }
 .topbar h1 {
-  margin: 0;
+  margin: 0px;
   color: #fff;
-  font: 22px "Anton", sans-serif;
+  font-size: 22px;
+  line-height: normal;
+  font-family: "Anton", sans-serif;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  font-stretch: normal;
   letter-spacing: 1px;
 }
 .topbar p {
-  margin: 0;
+  margin: 0px;
   color: #ffe9f2;
   font-size: 13px;
 }
@@ -69,7 +86,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  padding: 18px 20px 28px;
+  padding: 18px 20px 28px 20px;
 }
 .controls {
   display: flex;
@@ -86,14 +103,22 @@ body {
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  border: 1px solid #3d1b4d;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #3d1b4d;
   border-radius: 12px;
-  background: #22102e;
+  background-color: #22102e;
 }
 .group h2 {
-  margin: 0;
+  margin: 0px;
   color: #ffd23f;
-  font: 15px "Anton", sans-serif;
+  font-size: 15px;
+  line-height: normal;
+  font-family: "Anton", sans-serif;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  font-stretch: normal;
   letter-spacing: 1px;
 }
 .group label {
@@ -112,10 +137,12 @@ body {
 }
 
 input[type=text] {
-  padding: 8px 10px;
-  border: 1px solid #5b2a6e;
+  padding: 8px 10px 8px 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #5b2a6e;
   border-radius: 7px;
-  background: #14041f;
+  background-color: #14041f;
   color: #fff;
   font: inherit;
 }
@@ -125,27 +152,27 @@ input[type=range] {
 }
 
 button {
-  padding: 9px 12px;
-  border: 0;
+  padding: 9px 12px 9px 12px;
+  border-width: 0px;
   border-radius: 8px;
-  background: #3d1b4d;
+  background-color: #3d1b4d;
   color: #fff;
   cursor: pointer;
   font: inherit;
   font-weight: 700;
 }
 button:hover {
-  background: #522464;
+  background-color: #522464;
 }
 button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 button.primary {
-  background: #ff2e7e;
+  background-color: #ff2e7e;
 }
 button.primary:hover {
-  background: #ff4d90;
+  background-color: #ff4d90;
 }
 button.big {
   padding: 12px;
@@ -156,7 +183,7 @@ button.big {
   display: block;
   padding: 10px;
   border-radius: 8px;
-  background: #ff7a2f;
+  background-color: #ff7a2f;
   color: #14041f;
   cursor: pointer;
   font-weight: 800;
@@ -164,7 +191,9 @@ button.big {
 }
 #dropzone {
   padding: 10px;
-  border: 1.5px dashed #7a4a8c;
+  border-width: 1.5px;
+  border-style: dashed;
+  border-color: #7a4a8c;
   border-radius: 8px;
   color: #c9a8d4;
   font-size: 13px;
@@ -173,7 +202,7 @@ button.big {
 #dropzone.over {
   border-color: #ffd23f;
   color: #ffd23f;
-  background: rgba(255,210,63,0.08);
+  background-color: rgba(255, 210, 63, 0.08);
 }
 .strip {
   display: flex;
@@ -183,9 +212,12 @@ button.big {
 .thumb {
   width: 62px;
   height: 46px;
-  padding: 0;
-  overflow: hidden;
-  border: 2px solid transparent;
+  padding: 0px;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  border-width: 2px;
+  border-style: solid;
+  border-color: transparent;
   border-radius: 6px;
   background: none;
 }
@@ -205,12 +237,14 @@ button.big {
   gap: 6px;
 }
 .pick button {
-  flex: 1 1 auto;
-  padding: 8px 6px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
+  padding: 8px 6px 8px 6px;
   font-size: 13px;
 }
 .pick button.active {
-  background: #ff2e7e;
+  background-color: #ff2e7e;
 }
 
 .heat-row {
@@ -225,9 +259,9 @@ button.big {
   gap: 2px;
 }
 .stars button {
-  padding: 2px 3px;
+  padding: 2px 3px 2px 3px;
   background: none;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 20px;
 }
 .stars button.active {
@@ -235,19 +269,21 @@ button.big {
 }
 
 .hint {
-  margin: 0;
+  margin: 0px;
   color: #c9a8d4;
   font-size: 13px;
 }
 #status {
-  margin: 0;
+  margin: 0px;
   min-height: 20px;
   color: #ffd23f;
   font-size: 13px;
 }
 
 .stage {
-  flex: 1;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
   min-width: 0;
 }
 .stage canvas {
@@ -255,18 +291,18 @@ button.big {
   width: 100%;
   height: auto;
   border-radius: 6px;
-  background: #0d0214;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+  background-color: #0d0214;
+  box-shadow: 0px 12px 40px rgba(0, 0, 0, 0.55);
 }
 .stage-note {
-  margin: 10px 2px 0;
+  margin: 10px 2px 0 2px;
   color: #a98ab5;
   font-size: 13px;
 }
 
-/* Shot scenes for screenshots: hide the editor chrome, canvas fills the frame. */
+/* Shot scenes: hide the editor chrome so the canvas fills the frame. */
 body.shot-cover {
-  background: #0d0214;
+  background-color: #0d0214;
 }
 body.shot-cover .topbar,
 body.shot-cover .controls,
@@ -275,12 +311,12 @@ body.shot-cover .stage-note {
 }
 body.shot-cover .app {
   display: block;
-  padding: 0;
+  padding: 0px;
 }
 body.shot-cover .stage canvas {
   width: 100vw;
   height: 100vh;
-  border-radius: 0;
+  border-radius: 0px;
   box-shadow: none;
   object-fit: fill;
 }
