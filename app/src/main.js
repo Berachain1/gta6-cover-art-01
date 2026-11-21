@@ -13,30 +13,30 @@ import { runShot } from "./shots.js";
 // The sample photos the app ships with: {name, src} objects, name
 // being the label the strip shows under each thumbnail.
 const SAMPLE_PHOTOS = [
-  { name: "Woman · convertible", src: "samples/woman.jpg" },
-  { name: "Fisherman · pier", src: "samples/fisherman.jpg" },
-  { name: "Friends · neon street", src: "samples/neon.jpg" },
-  { name: "Man · rooftop", src: "samples/rooftop.jpg" },
-  { name: "Boulevard · kit", src: "samples/boulevard.jpg" },
-  { name: "Pier · kit", src: "samples/pier.jpg" },
-  { name: "Orange car · deco street", src: "samples/car.jpg" },
-  { name: "Coast road · sunset", src: "samples/coast.jpg" },
-  { name: "Woman · sunset convertible", src: "samples/sunset.jpg" },
+  { src: "samples/woman.jpg", name: "Woman · convertible" },
+  { src: "samples/fisherman.jpg", name: "Fisherman · pier" },
+  { src: "samples/neon.jpg", name: "Friends · neon street" },
+  { src: "samples/rooftop.jpg", name: "Man · rooftop" },
+  { src: "samples/boulevard.jpg", name: "Boulevard · kit" },
+  { src: "samples/pier.jpg", name: "Pier · kit" },
+  { src: "samples/car.jpg", name: "Orange car · deco street" },
+  { src: "samples/coast.jpg", name: "Coast road · sunset" },
+  { src: "samples/sunset.jpg", name: "Woman · sunset convertible" },
 ];
 
 // Caption chips for the panels {line, time, place}, one per sample
 // photo. The wording is original — the same kind of location/time
 // chips the top-5 covers carry on theirs.
 const CAPTIONS = [
-  { line: "ENGINE RUNNING", time: "6:47 PM", place: "CORAL DRIVE" },
-  { line: "FIRST CAST", time: "5:30 AM", place: "PIER 26" },
-  { line: "NO BRAKES", time: "11:50 PM", place: "NEON MILE" },
-  { line: "CITY LIGHTS", time: "8:30 PM", place: "ROOFTOP 9" },
-  { line: "AFTER DARK", time: "9:15 PM", place: "PALM ROW" },
-  { line: "GOLDEN HOUR", time: "6:10 PM", place: "TOWER 2" },
-  { line: "TOP DOWN", time: "7:05 PM", place: "DECO ROW" },
-  { line: "LAST LIGHT", time: "6:58 PM", place: "COAST ROAD" },
-  { line: "GOLDEN HOUR", time: "7:42 PM", place: "CORAL DRIVE" },
+  { place: "CORAL DRIVE", time: "6:47 PM", line: "ENGINE RUNNING" },
+  { place: "PIER 26", time: "5:30 AM", line: "FIRST CAST" },
+  { place: "NEON MILE", time: "11:50 PM", line: "NO BRAKES" },
+  { place: "ROOFTOP 9", time: "8:30 PM", line: "CITY LIGHTS" },
+  { place: "PALM ROW", time: "9:15 PM", line: "AFTER DARK" },
+  { place: "TOWER 2", time: "6:10 PM", line: "GOLDEN HOUR" },
+  { place: "DECO ROW", time: "7:05 PM", line: "TOP DOWN" },
+  { place: "COAST ROAD", time: "6:58 PM", line: "LAST LIGHT" },
+  { place: "CORAL DRIVE", time: "7:42 PM", line: "GOLDEN HOUR" },
 ];
 
 // Default crop per panel, per layout. A crop is
@@ -44,22 +44,6 @@ const CAPTIONS = [
 // square-only override as {photo, fx, fy, zoom}. fx/fy is the focus
 // point (0..1) inside the photo; zoom is >= 1. The crops are picked
 // so faces stay in frame and no panel shows an awkward body-part cut.
-//
-// Square is the awkward one: its 3-panel row is short (0.44h), the
-// title's letters cover the whole row top, and the rooftop face —
-// sitting at the top of its photo — cannot be cropped below the
-// letters at any zoom (verified: zoom 1.35 only pushed the beard
-// below them). So P3 carries an `sq` override: the coast road (no
-// face) in square only. The override lives in cover.js
-// (drawCoverGrid, w === h).
-//
-// The 3-panel row in portrait and square runs P1 P2 P3, and the title
-// crashes over the whole row — a face in the LEFT column sits behind
-// the "P" and can never escape it, so the row is ordered face-free on
-// the left: car (no face), neon, rooftop (right column, where the
-// fisherman's face already escaped the "T"). Landscape is unaffected:
-// P1 mid-top and P3 right-top both sit fully above the title, so car,
-// rooftop and fisherman all stay whole there.
 //
 // hero-vice is MULTI-SUBJECT (v3): six different photos, one per
 // panel — the variety the top-5 covers have. The hero is the woman
@@ -74,6 +58,22 @@ const CAPTIONS = [
 // stays in frame. v5: the hero is the SUNSET woman (photo 8, a
 // blazing sky — #1's glow was the one gap no layout fix could
 // close).
+//
+// The 3-panel row in portrait and square runs P1 P2 P3, and the title
+// crashes over the whole row — a face in the LEFT column sits behind
+// the "P" and can never escape it, so the row is ordered face-free on
+// the left: car (no face), neon, rooftop (right column, where the
+// fisherman's face already escaped the "T"). Landscape is unaffected:
+// P1 mid-top and P3 right-top both sit fully above the title, so car,
+// rooftop and fisherman all stay whole there.
+//
+// Square is the awkward one: its 3-panel row is short (0.44h), the
+// title's letters cover the whole row top, and the rooftop face —
+// sitting at the top of its photo — cannot be cropped below the
+// letters at any zoom (verified: zoom 1.35 only pushed the beard
+// below them). So P3 carries an `sq` override: the coast road (no
+// face) in square only. The override lives in cover.js
+// (drawCoverGrid, w === h).
 const DEFAULT_CROPS = {
   chaos: [
     { photo: 8, fx: 0.42, fy: 0.32, zoom: 1.05 },

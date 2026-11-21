@@ -1,22 +1,22 @@
-// cover.js — the poster painter.
+// cover.js — paints the poster onto any 2D canvas.
 //
-// drawCoverGrid paints a whole GTA-style cover onto any 2D canvas, at
-// any size: a multi-panel photo grid with black gutters, a gradient-map
-// or poster-ink grade on every panel, one huge gradient title block
-// with a neon script subtitle beneath it, and the poster furniture
-// (starburst badge, HEAT stars, barcode, ORIGINAL ribbon).
-// exportCoverPNG draws that same art offscreen at the exact post size
-// and hands back a PNG blob.
+// drawCoverGrid takes a canvas, the editor state and the loaded photos
+// and paints a complete GTA-style cover: a multi-panel photo grid with
+// black gutters, a gradient-map or poster-ink grade on every panel, one
+// huge gradient title block with a neon script subtitle beneath it, and
+// the poster furniture (starburst badge, HEAT stars, barcode, ORIGINAL
+// ribbon). exportCoverPNG renders that same art offscreen at the exact
+// post size and returns a PNG blob.
 //
-// The title block comes in four shapes: 'cell' (the title fills a
-// single grid cell), 'band' (a full-width band, used when portrait /
-// square layouts re-flow), 'hero' (a full-width band whose title is
-// stretched to sprawl across the whole width, like the top covers)
-// and 'overlap' (the title floats over the panels). In overlap mode
-// the letters sit on a dark scrim, and the script subtitle gets its own
-// solid dark plate behind it — without that plate the subtitle can land
-// on a bright, busy photo area and vanish, which is exactly what happens
-// on the Tilted layout's lower panels.
+// The title block has four shapes. 'cell' fills one grid cell; 'band'
+// is a full-width band (used when portrait / square layouts re-flow);
+// 'hero' is a full-width band whose title stretches to sprawl across
+// the whole width, like the top covers; 'overlap' floats the title over
+// the panels. In overlap mode the letters sit on a dark scrim, and the
+// script subtitle gets its own solid dark plate behind it — without
+// that plate the subtitle can land on a bright, busy photo area and
+// vanish, which is exactly what happens on the Tilted layout's lower
+// panels.
 
 import { drawCroppedPhoto, gradePanelImage } from "./grades.js";
 
@@ -24,48 +24,48 @@ const GAP = 10;
 
 // Post sizes and their labels.
 export const EXPORT_SIZES = {
-  landscape: { w: 1920, h: 1080, label: "1920 × 1080" },
-  portrait: { w: 1080, h: 1350, label: "1080 × 1350" },
-  square: { w: 1080, h: 1080, label: "1080 × 1080" },
+  landscape: { label: "1920 × 1080", w: 1920, h: 1080 },
+  portrait: { label: "1080 × 1350", w: 1080, h: 1350 },
+  square: { label: "1080 × 1080", w: 1080, h: 1080 },
 };
 
 // Layout names for the editor picker.
 export const LAYOUTS = {
-  chaos: "Chaos Key-Art · tilted collage + title over photos",
-  "hero-vice": "Hero Vice · big-face hero + title band + strip",
-  "vice-grid": "Vice Grid · 9-panel poster",
-  "hero-three": "Hero + Three",
-  tilted: "Tilted Snapshots",
   "full-bleed": "Full Bleed",
+  tilted: "Tilted Snapshots",
+  "hero-three": "Hero + Three",
+  "vice-grid": "Vice Grid · 9-panel poster",
+  "hero-vice": "Hero Vice · big-face hero + title band + strip",
+  chaos: "Chaos Key-Art · tilted collage + title over photos",
 };
 
 // Grade names for the editor picker.
 export const GRADES = {
-  sunset: "Sunset",
-  neon: "Neon Night",
-  golden: "Golden Hour",
   ink: "Poster Ink",
+  golden: "Golden Hour",
+  neon: "Neon Night",
+  sunset: "Sunset",
 };
 
 /**
- * Panel geometry for a layout at (w, h). Returns { panels, title, badge }:
+ * Panel geometry for a layout at (w, h). It returns { panels, title, badge }:
  * panels are {x, y, w, h} rects (optionally `slant` for diagonal cuts or
  * `snap` for a rotated polaroid); title is the title-block rect plus a
- * `mode` ('cell' | 'band' | 'overlap'); badge is the starburst position.
+ * `mode` ('cell' | 'band' | 'overlap'); badge is where the starburst goes.
  */
 export function layoutPanels(w, h, layout) {
   const g = (w / 1920) * GAP;
   const tall = w <= h;
   const panels = [];
 
-  // hero-vice: one LARGE hero panel on the left (a big face, about
-  // half the cover), a 2-stack middle column and a 3-stack right column
-  // above it, a WIDE title band across the full width — 30%, the title
-  // zone of the top covers, not a 42% flat slab — and a thin bottom
-  // strip with palms, tagline, fine print, and barcode. The title
-  // sprawls across the band the way the top-2 covers do; a press-quote
-  // pill straddles the panel/title boundary, and every panel carries a
-  // location/time caption chip.
+  // hero-vice: one LARGE hero panel on the left (a big face, about half
+  // the cover), a 2-stack middle column and a 3-stack right column above
+  // it, a WIDE title band across the full width — 30%, the title zone of
+  // the top covers, not a 42% flat slab — and a thin bottom strip with
+  // palms, tagline, fine print, and barcode. The title sprawls across
+  // the band the way the top-2 covers do; a press-quote pill straddles
+  // the panel/title boundary, and every panel carries a location/time
+  // caption chip.
   if (layout === "hero-vice") {
     const b = h * 0.3;
     const s = h * 0.075;
@@ -109,14 +109,14 @@ export function layoutPanels(w, h, layout) {
     };
   }
 
-  // chaos is the key-art collage of the top-3 covers. The photos run
-  // the full height BEHIND the title — the title crashes OVER them
-  // from about 50% down, like do-tinh's SUNSET STATE and ahmadfdn's
-  // VICE STATE — and there is no title band at all. The hero panel's
-  // right edge is a diagonal (slant), one mid panel and two right
-  // panels are rotated a few degrees, and the starburst sits on a
-  // panel junction instead of a corner. `wanted` is the top-right
-  // anchor of the fisherman panel for the WANTED pill.
+  // chaos is the top-3 covers' key-art collage. Photos run the full
+  // height BEHIND the title — the title crashes OVER them from about
+  // 50% down, like do-tinh's SUNSET STATE and ahmadfdn's VICE STATE —
+  // and there is no title band at all. The hero panel's right edge is
+  // a diagonal (slant), one mid panel and two right panels are rotated
+  // a few degrees, and the starburst sits on a panel junction instead
+  // of a corner. `wanted` is the top-right anchor of the fisherman
+  // panel for the WANTED pill.
   if (layout === "chaos") {
     const s = h * 0.075;
     const stripY = h - s - g;
@@ -457,13 +457,13 @@ function drawPillRight(ctx, edgeX, top, text, bg, fg, fs, o = {}) {
 }
 
 /**
- * Draws the title block: a sunset-gradient panel holding an eyebrow
+ * Draws the title block: a sunset-gradient panel with an eyebrow
  * line, one huge gradient title (auto-fit, black outline), a neon
  * script subtitle, a tagline, and the HEAT stars.
  *
  * In overlap mode the block hovers over photos, so it first paints a
  * dark scrim and puts a solid dark plate behind the script subtitle.
- * Skip that plate and the subtitle can land on a bright, busy photo
+ * Without that plate the subtitle can land on a bright, busy photo
  * patch and disappear — exactly what happens on the Tilted layout's
  * lower panels.
  */
@@ -675,8 +675,8 @@ export function drawTitleBlock(ctx, rect, state) {
   ctx.restore(); // title block done
 }
 
-// The bottom strip (hero mode): a thin magenta-gradient band under
-// the title carrying dark palm silhouettes, the tagline, fine print
+// The bottom strip (hero mode): a thin magenta-gradient band below
+// the title, carrying dark palm silhouettes, the tagline, fine print
 // and a barcode — the foot furniture every top-5 cover has.
 export function drawBottomStrip(ctx, rect, state) {
   const { x, y, w, h } = rect;
@@ -746,7 +746,7 @@ export function drawBottomStrip(ctx, rect, state) {
 }
 
 // WANTED ★★★★★ pill on a photo panel's top-right corner (chaos mode),
-// tilted a touch like a stuck-on label.
+// tilted slightly, like a stuck-on label.
 export function drawWantedPill(ctx, anchor, coverW) {
   const scale = Math.max(coverW / 1920, 0.5);
   const fs = Math.max(13, scale * 24);
@@ -839,7 +839,7 @@ export function drawPanelCaption(ctx, p, cap, coverW) {
 
 /**
  * Paints the whole cover onto `ctx` at the canvas's own size.
- * `state` holds the layout, grade, texts, heat, assignments and the
+ * `state` carries the layout, grade, texts, heat, assignments and the
  * photo images; `photos` is the array of loaded images, and the
  * assignments index into it.
  */
@@ -999,7 +999,7 @@ export function drawCoverGrid(canvas, state, photos) {
   return { strip, title, panels };
 }
 
-/** Renders the cover offscreen at an exact post size and returns a PNG blob. */
+/** Renders the cover offscreen at an exact post size and hands back a PNG blob. */
 export function exportCoverPNG(state, photos, sizeKey) {
   return new Promise((resolve) => {
     const dims = EXPORT_SIZES[sizeKey];

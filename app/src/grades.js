@@ -1,10 +1,10 @@
-// grades.js — the colour grades painted onto each cover panel.
+// grades.js — colour grades for every cover panel.
 //
-// A grade is a gradient map: a pixel's brightness picks a colour out
-// of the grade's palette, and that colour is blended back toward the
+// A grade works as a gradient map: a pixel's brightness picks a colour
+// from the grade's palette, and that colour is blended back toward the
 // pixel it came from, so a photo keeps its own identity instead of
-// going flat. Poster Ink adds a comic-book pass on top of that: a few
-// flat posterised levels, halftone dots, film grain, and a vignette.
+// going flat. Poster Ink adds a comic-book pass on top: a few flat
+// posterised levels, halftone dots, film grain, and a vignette.
 // Everything runs on plain 2D canvas pixels, so it works on any
 // photo — samples, phone shots, anything — with no network and no
 // library.
@@ -43,7 +43,7 @@ export const GRADE_PALETTES = {
     { at: 0.8, r: 255, g: 176, b: 64 },
     { at: 1.0, r: 255, g: 236, b: 160 },
   ],
-  // Warm mids on purpose: coral-orange at 0.55 rather than magenta-pink,
+  // Warm mids on purpose — coral-orange at 0.55, not magenta-pink —
   // so skin in the poster-ink pass reads sun-warmed instead of purple.
   ink: [
     { at: 0.0, r: 22, g: 6, b: 38 },
@@ -55,8 +55,9 @@ export const GRADE_PALETTES = {
 };
 
 /**
- * One lookup table per channel for `grade`. `strength` 0..1 sets how far
- * the mapped colour replaces the original pixel (1 = full gradient map).
+ * Builds one lookup table per channel for `grade`. `strength` 0..1
+ * sets how far the mapped colour replaces the original pixel
+ * (1 = full gradient map).
  */
 export function buildGradeLUT(grade, strength = 0.62) {
   const st = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
@@ -82,7 +83,7 @@ export function buildGradeLUT(grade, strength = 0.62) {
   return lut;
 }
 
-/** Pushes every pixel through the grade LUT, keyed by brightness. */
+/** Runs every pixel through the grade LUT, keyed by brightness. */
 export function applyGradientGrade(img, grade, strength) {
   const lut = buildGradeLUT(grade, strength);
   const d = img.data;
@@ -98,7 +99,7 @@ export function applyGradientGrade(img, grade, strength) {
 /**
  * Warms the skin band: pixels whose brightness sits in the middle range
  * get a red lift and a blue cut, fading to nothing at the band edges.
- * This runs before posterising so the poster-ink grade keeps faces warm
+ * It runs before posterising so the poster-ink grade keeps faces warm
  * rather than pushing them toward violet. `amount` 0..1; 0.5 is gentle.
  */
 export function warmSkinTones(img, amount = 0.5) {
@@ -110,7 +111,7 @@ export function warmSkinTones(img, amount = 0.5) {
     if (lum < 70 || lum > 215) {
       continue;
     }
-    // Triangle weight: full effect near brightness 140, none at the edges.
+    // Triangle weight: full effect near brightness 140, fading to none at the edges.
     const wt = lum < 140 ? (lum - 70) / 70 : (215 - lum) / 75;
     d[i] = clampByte(d[i] + redUp * wt);
     d[i + 2] = clampByte(d[i + 2] - blueDown * wt);
@@ -138,7 +139,7 @@ export function warmHighlights(frame, amount = 0.5, cutoff = 175) {
   return frame;
 }
 
-/** Flattens each channel to `levels` even steps — the comic-ink feel. */
+/** Flattens every channel to `levels` even steps — the comic-ink feel. */
 export function posterizeImageData(img, levels = 5) {
   const d = img.data;
   const step = 255 / (levels - 1);
@@ -151,7 +152,7 @@ export function posterizeImageData(img, levels = 5) {
   return img;
 }
 
-/** Pushes colours away from grey in place (1 leaves them unchanged). */
+/** Pushes colours away from grey, in place (1 leaves them unchanged). */
 export function saturateImageData(img, amt = 1.25) {
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -164,7 +165,7 @@ export function saturateImageData(img, amt = 1.25) {
 }
 
 let halftoneTile = null;
-/** A reusable tile of print dots, denser toward one corner of a cell. */
+/** A reusable print-dot tile, denser toward one corner of a cell. */
 export function makeHalftonePattern(size = 96) {
   if (halftoneTile === null) {
     const cv = document.createElement("canvas");
@@ -186,7 +187,7 @@ export function makeHalftonePattern(size = 96) {
   return halftoneTile;
 }
 
-/** Lays halftone dots over a panel at low opacity. */
+/** Lays halftone dots over a panel, at low opacity. */
 export function applyHalftone(ctx, w, h, alpha = 0.16) {
   const p = ctx.createPattern(makeHalftonePattern(), "repeat");
   ctx.save();
@@ -197,7 +198,7 @@ export function applyHalftone(ctx, w, h, alpha = 0.16) {
 }
 
 let grainTile = null;
-/** A reusable tile of neutral film grain, built once. */
+/** A reusable neutral film-grain tile, built once. */
 export function makeGrainCanvas(size = 160) {
   if (grainTile === null) {
     const cv = document.createElement("canvas");
@@ -218,7 +219,7 @@ export function makeGrainCanvas(size = 160) {
   return grainTile;
 }
 
-/** Dusts film grain over a panel with an overlay blend. */
+/** Dusts film grain over a panel using an overlay blend. */
 export function applyGrain(ctx, w, h, alpha = 0.07) {
   const p = ctx.createPattern(makeGrainCanvas(), "repeat");
   ctx.save();
@@ -229,7 +230,7 @@ export function applyGrain(ctx, w, h, alpha = 0.07) {
   ctx.restore();
 }
 
-/** Darkens a panel's corners so it reads like a printed poster. */
+/** Darkens the corners of a panel so it reads like a printed poster. */
 export function applyVignette(ctx, w, h, amt = 0.28) {
   const g = ctx.createRadialGradient(
     w * 0.5, h * 0.5, Math.min(w, h) * 0.32,
@@ -244,10 +245,10 @@ export function applyVignette(ctx, w, h, amt = 0.28) {
 }
 
 /**
- * Grades one photo panel and returns the graded canvas. `crop` is
- * {fx, fy, zoom} — the focus point (0..1) and zoom (>= 1). The grade
- * runs at most ~760 px wide and is upscaled on draw, which keeps the
- * pixel loops fast without visible loss at post sizes.
+ * Grades a single photo panel and hands back the graded canvas.
+ * `crop` is {fx, fy, zoom} — focus point (0..1) and zoom (>= 1).
+ * The grade runs at most ~760 px wide and is upscaled when drawn,
+ * which keeps the pixel loops fast with no visible loss at post sizes.
  */
 export function gradePanelImage(photo, pw, ph, crop, gradeName) {
   const out = document.createElement("canvas");
@@ -273,14 +274,14 @@ export function gradePanelImage(photo, pw, ph, crop, gradeName) {
       posterizeImageData(img, 6);
       break;
     default:
-      // Sunset (the default): photographic, NOT a gradient map. The map
-      // swaps every pixel's hue for a brightness-derived tint (its LUT is
-      // keyed on brightness alone), so at any strength it turns the pink
-      // car cream and the sea grey. A saturation lift plus warm mids keeps
-      // each photo's own colour and gives the warm sunset feel the top
-      // covers have. The highlight lift is what makes skies glow orange
-      // like #1's instead of staying pale — it only touches the bright
-      // end, so mid-tone skin is untouched.
+      // Sunset (the default) stays photographic — never a gradient map.
+      // A map swaps each pixel's hue for a brightness-derived tint (its
+      // LUT keys on brightness alone), so at any strength it turns the
+      // pink car cream and the sea grey. A saturation lift plus warm
+      // mids keeps each photo's own colour and gives the warm sunset
+      // feel the top covers have. The highlight lift is what makes
+      // skies glow orange like #1's instead of staying pale — it only
+      // touches the bright end, so mid-tone skin is untouched.
       saturateImageData(img, 1.18);
       warmSkinTones(img, 0.6);
       warmHighlights(img, 0.55);
@@ -298,9 +299,9 @@ export function gradePanelImage(photo, pw, ph, crop, gradeName) {
 }
 
 /**
- * Cover-fits `photo` into the rect (dx, dy, tw, th) on `ctx`, panning
- * toward the focus point and zooming in. The crop never shows empty
- * space.
+ * Cover-fits `photo` into the rect (dx, dy, tw, th) on `ctx`,
+ * panning toward the focus point and zooming in. Empty space
+ * never shows in the crop.
  */
 export function drawCroppedPhoto(ctx, photo, dx, dy, tw, th, crop = {}) {
   const iw = photo.naturalWidth || photo.width;
