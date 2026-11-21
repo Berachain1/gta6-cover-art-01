@@ -11,18 +11,18 @@
 import { drawCoverGrid } from "./cover.js";
 
 // Post sizes for the cover scene: [width, height] in pixels.
-const POST_SIZES = {
-  portrait: [1080, 1350],
-  square: [1080, 1080],
+const COVER_DIMS = {
   landscape: [1920, 1080],
+  square: [1080, 1080],
+  portrait: [1080, 1350],
 };
 
 // Query keys copied straight onto state fields, in order.
-const QUERY_KEYS = ["layout", "grade", "title", "size"];
+const STATE_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
-function applyQueryParams(q, state) {
-  for (const k of QUERY_KEYS) {
+function copyQueryToState(q, state) {
+  for (const k of STATE_KEYS) {
     const v = q.get(k);
     if (v !== null && v !== "") {
       state[k] = v;
@@ -35,7 +35,7 @@ function applyQueryParams(q, state) {
 }
 
 /** Loads both display faces explicitly before anything is drawn. */
-async function loadFaces() {
+async function ensureFaces() {
   await document.fonts.ready;
   // fonts.ready can settle before Anton/Pacifico have even started
   // loading (nothing on the page uses them until the canvas does), and
@@ -46,13 +46,13 @@ async function loadFaces() {
 }
 
 /** Paints the cover scene onto the page canvas at the post size. */
-async function paintCoverScene(q, kit) {
+async function renderCoverShot(q, kit) {
   document.body.classList.add("shot-cover");
-  applyQueryParams(q, kit.state);
-  await loadFaces();
+  copyQueryToState(q, kit.state);
+  await ensureFaces();
   await kit.loadSamplePhotos();
   const key = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
-  const dims = POST_SIZES[key] ?? POST_SIZES.landscape;
+  const dims = COVER_DIMS[key] ?? COVER_DIMS.landscape;
   kit.canvas.width = dims[0];
   kit.canvas.height = dims[1];
   drawCoverGrid(kit.canvas, kit.state, kit.photos);
@@ -61,9 +61,9 @@ async function paintCoverScene(q, kit) {
 }
 
 /** Paints the editor scene: controls wired, preview drawn. */
-async function paintEditorScene(q, kit) {
-  applyQueryParams(q, kit.state);
-  await loadFaces();
+async function renderEditorShot(q, kit) {
+  copyQueryToState(q, kit.state);
+  await ensureFaces();
   await kit.loadSamplePhotos();
   kit.bindEditor();
   kit.syncControls();
@@ -73,17 +73,17 @@ async function paintEditorScene(q, kit) {
 }
 
 // Portrait and square are the cover scene with the size preset.
-const SIZE_PRESETS = { square: "square", portrait: "portrait", cover: null };
+const SCENE_SIZES = { cover: null, portrait: "portrait", square: "square" };
 
 export async function runShot(scene, q, kit) {
   if (scene === "editor") {
-    await paintEditorScene(q, kit);
+    await renderEditorShot(q, kit);
   } else if (scene === "cover" || scene === "portrait" || scene === "square") {
-    const size = SIZE_PRESETS[scene];
+    const size = SCENE_SIZES[scene];
     if (size !== null) {
       kit.state.size = size;
     }
-    await paintCoverScene(q, kit);
+    await renderCoverShot(q, kit);
   } else {
     window.__shotReady = true;
   }

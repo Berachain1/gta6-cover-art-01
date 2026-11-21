@@ -1,10 +1,10 @@
 # V5 — the final round before submit (gta6-cover-art-01)
 
-HEAD is still `fb3c0fc` and nothing has been submitted, pushed or committed — v5 lives only in the worktree. The recording (`01a1f3ee-5b16-772e-b03a-8d8309487db3`, PID 11313) is still running and untouched. Deadline: Saturday 21 Nov, 17:30 WIB. Quota: a full 3/3. Bos's rule stands — SUBMIT TERAKHIR = FINAL, no submit just to measure; the work has to be right first.
+State: HEAD still `fb3c0fc`, nothing submitted, pushed or committed — v5 lives only in the worktree. The recording (`01a1f3ee-5b16-772e-b03a-8d8309487db3`, PID 11313) is still running and untouched. Deadline: Saturday 21 Nov, 17:30 WIB. Quota: a full 3/3. Bos's rule stands — SUBMIT TERAKHIR = FINAL, no submit just to measure; the work has to be right first.
 
-## Verdict up front
+## The verdict
 
-**Top 10 is now CREDIBLE — every gap that could be named and fixed is closed.** A paid place (top 50) is very likely. But top 10 is still UNPROVEN — the only proof is the dev grade after submit, and Bos has already ruled that the last submit is final (no submit to measure). Rank 1 cannot be claimed.
+**Top 10 is CREDIBLE now — every gap that could be named and fixed is closed.** A paid place (top 50) is very likely. But top 10 is still UNPROVEN — the only proof is the dev grade after submit, and Bos has already ruled that the last submit is final (no submit to measure). Rank 1 cannot be claimed.
 
 The board, re-checked: #1 do-tinh 93.9361, #2 amber-lark-66 93.6356, #3 ahmadfdn 93.362, #10 hayatoshima8810-sketch 92.1573, ranked 3,063 — the top 3 and the #10 bar have not moved since 23:23 WIB.
 

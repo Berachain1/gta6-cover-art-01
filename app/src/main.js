@@ -7,36 +7,36 @@
 // all three post sizes. A `?shot=` query in the URL swaps the editor
 // for a fixed screenshot scene instead — the scenes live in ./shots.js.
 
-import { EXPORT_SIZES, GRADES, LAYOUTS, drawCoverGrid, exportCoverPNG, layoutPanels, panelCount } from "./cover.js";
+import { layoutPanels, panelCount, drawCoverGrid, exportCoverPNG, LAYOUTS, GRADES, EXPORT_SIZES } from "./cover.js";
 import { runShot } from "./shots.js";
 
-// The sample photos the app ships with: {name, src} objects, name
+// The sample photos the app ships with: {src, name} objects, name
 // being the label the strip shows under each thumbnail.
 const SAMPLE_PHOTOS = [
-  { src: "samples/woman.jpg", name: "Woman · convertible" },
-  { src: "samples/fisherman.jpg", name: "Fisherman · pier" },
-  { src: "samples/neon.jpg", name: "Friends · neon street" },
-  { src: "samples/rooftop.jpg", name: "Man · rooftop" },
-  { src: "samples/boulevard.jpg", name: "Boulevard · kit" },
-  { src: "samples/pier.jpg", name: "Pier · kit" },
-  { src: "samples/car.jpg", name: "Orange car · deco street" },
-  { src: "samples/coast.jpg", name: "Coast road · sunset" },
-  { src: "samples/sunset.jpg", name: "Woman · sunset convertible" },
+  { name: "Woman · convertible", src: "samples/woman.jpg" },
+  { name: "Fisherman · pier", src: "samples/fisherman.jpg" },
+  { name: "Friends · neon street", src: "samples/neon.jpg" },
+  { name: "Man · rooftop", src: "samples/rooftop.jpg" },
+  { name: "Boulevard · kit", src: "samples/boulevard.jpg" },
+  { name: "Pier · kit", src: "samples/pier.jpg" },
+  { name: "Orange car · deco street", src: "samples/car.jpg" },
+  { name: "Coast road · sunset", src: "samples/coast.jpg" },
+  { name: "Woman · sunset convertible", src: "samples/sunset.jpg" },
 ];
 
-// Caption chips for the panels {line, time, place}, one per sample
+// Caption chips for the panels {place, time, line}, one per sample
 // photo. The wording is original — the same kind of location/time
 // chips the top-5 covers carry on theirs.
 const CAPTIONS = [
-  { place: "CORAL DRIVE", time: "6:47 PM", line: "ENGINE RUNNING" },
-  { place: "PIER 26", time: "5:30 AM", line: "FIRST CAST" },
-  { place: "NEON MILE", time: "11:50 PM", line: "NO BRAKES" },
-  { place: "ROOFTOP 9", time: "8:30 PM", line: "CITY LIGHTS" },
-  { place: "PALM ROW", time: "9:15 PM", line: "AFTER DARK" },
-  { place: "TOWER 2", time: "6:10 PM", line: "GOLDEN HOUR" },
-  { place: "DECO ROW", time: "7:05 PM", line: "TOP DOWN" },
-  { place: "COAST ROAD", time: "6:58 PM", line: "LAST LIGHT" },
-  { place: "CORAL DRIVE", time: "7:42 PM", line: "GOLDEN HOUR" },
+  { line: "ENGINE RUNNING", place: "CORAL DRIVE", time: "6:47 PM" },
+  { line: "FIRST CAST", place: "PIER 26", time: "5:30 AM" },
+  { line: "NO BRAKES", place: "NEON MILE", time: "11:50 PM" },
+  { line: "CITY LIGHTS", place: "ROOFTOP 9", time: "8:30 PM" },
+  { line: "AFTER DARK", place: "PALM ROW", time: "9:15 PM" },
+  { line: "GOLDEN HOUR", place: "TOWER 2", time: "6:10 PM" },
+  { line: "TOP DOWN", place: "DECO ROW", time: "7:05 PM" },
+  { line: "LAST LIGHT", place: "COAST ROAD", time: "6:58 PM" },
+  { line: "GOLDEN HOUR", place: "CORAL DRIVE", time: "7:42 PM" },
 ];
 
 // Default crop per panel, per layout. A crop is
@@ -76,69 +76,69 @@ const CAPTIONS = [
 // (drawCoverGrid, w === h).
 const DEFAULT_CROPS = {
   chaos: [
-    { photo: 8, fx: 0.42, fy: 0.32, zoom: 1.05 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
-    { photo: 3, fx: 0.48, fy: 0.28, zoom: 1, sq: { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 } },
-    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
+    { fx: 0.42, fy: 0.32, photo: 8, zoom: 1.05 },
+    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.15 },
+    { fx: 0.55, fy: 0.42, photo: 2, zoom: 1.1 },
+    { fx: 0.48, fy: 0.28, photo: 3, sq: { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 }, zoom: 1 },
+    { fx: 0.48, fy: 0.3, photo: 1, zoom: 1 },
+    { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 },
   ],
   "hero-vice": [
-    { photo: 0, fx: 0.42, fy: 0.32, zoom: 1.05 },
-    { photo: 3, fx: 0.48, fy: 0.3, zoom: 1.15 },
-    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
-    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
+    { fx: 0.42, fy: 0.32, photo: 0, zoom: 1.05 },
+    { fx: 0.48, fy: 0.3, photo: 3, zoom: 1.15 },
+    { fx: 0.55, fy: 0.42, photo: 2, zoom: 1.1 },
+    { fx: 0.48, fy: 0.3, photo: 1, zoom: 1 },
+    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.15 },
+    { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 },
   ],
   "vice-grid": [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.15 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.05 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
-    { photo: 4, fx: 0.5, fy: 0.3, zoom: 1.25 },
-    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
-    { photo: 2, fx: 0.72, fy: 0.45, zoom: 1.4 },
+    { fx: 0.5, fy: 0.32, photo: 0, zoom: 1.15 },
+    { fx: 0.5, fy: 0.35, photo: 3, zoom: 1.1 },
+    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.15 },
+    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.05 },
+    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.15 },
+    { fx: 0.5, fy: 0.3, photo: 4, zoom: 1.25 },
+    { fx: 0.45, fy: 0.55, photo: 7, zoom: 1.15 },
+    { fx: 0.72, fy: 0.45, photo: 2, zoom: 1.4 },
   ],
   "hero-three": [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.05 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.15 },
+    { fx: 0.5, fy: 0.32, photo: 0, zoom: 1.05 },
+    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.1 },
+    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.2 },
+    { fx: 0.5, fy: 0.35, photo: 3, zoom: 1.15 },
   ],
   tilted: [
-    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.2 },
-    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.1 },
+    { fx: 0.5, fy: 0.32, photo: 0, zoom: 1.1 },
+    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.15 },
+    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.1 },
+    { fx: 0.5, fy: 0.35, photo: 3, zoom: 1.2 },
+    { fx: 0.55, fy: 0.55, photo: 6, zoom: 1.1 },
   ],
   "full-bleed": [
-    { photo: 0, fx: 0.5, fy: 0.35, zoom: 1.05 },
-    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
-    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
+    { fx: 0.5, fy: 0.35, photo: 0, zoom: 1.05 },
+    { fx: 0.5, fy: 0.45, photo: 2, zoom: 1.1 },
+    { fx: 0.5, fy: 0.35, photo: 1, zoom: 1.2 },
   ],
 };
 
 /** A fresh default state (screenshot scenes start from this as well). */
 export function defaultState() {
   return {
-    layout: "chaos",
+    assignments: JSON.parse(JSON.stringify(DEFAULT_CROPS)),
+    captions: CAPTIONS.map((c) => ({ line: c.line, place: c.place, time: c.time })),
     grade: "sunset",
-    title: "PALM HEAT",
-    subtitle: "where the sun never sets",
-    place: "CORAL BAY",
-    tagline: "EVERY STREET HAS A STORY",
     heat: 5,
+    layout: "chaos",
     onePhoto: false,
-    showRibbon: true,
+    place: "CORAL BAY",
+    selectedPanel: 0,
     showBarcode: true,
     showCaptions: true,
-    captions: CAPTIONS.map((c) => ({ place: c.place, time: c.time, line: c.line })),
+    showRibbon: true,
     size: "landscape",
-    assignments: JSON.parse(JSON.stringify(DEFAULT_CROPS)),
-    selectedPanel: 0,
+    subtitle: "where the sun never sets",
+    tagline: "EVERY STREET HAS A STORY",
+    title: "PALM HEAT",
   };
 }
 
@@ -265,9 +265,9 @@ export function fillAllWithPhoto(photoIndex) {
   for (const key of Object.keys(state.assignments)) {
     state.assignments[key] = state.assignments[key].map((c, i) => ({
       ...c,
-      photo: photoIndex,
       fx: xs[i % xs.length],
       fy: ys[i % ys.length],
+      photo: photoIndex,
       zoom: 1.25,
     }));
   }
@@ -502,7 +502,7 @@ function bindEditor() {
     if (i >= 0) {
       state.selectedPanel = i;
       const slot = state.assignments[state.layout]?.[i];
-      drag = { x: ev.clientX, y: ev.clientY, fx: slot.fx, fy: slot.fy };
+      drag = { fx: slot.fx, fy: slot.fy, x: ev.clientX, y: ev.clientY };
       canvas.setPointerCapture(ev.pointerId);
       paintPreview();
     }
@@ -515,8 +515,8 @@ function bindEditor() {
       if (slot !== undefined && p !== undefined) {
         const dx = ((ev.clientX - drag.x) / r.width) * (canvas.width / p.w);
         const dy = ((ev.clientY - drag.y) / r.height) * (canvas.height / p.h);
-        slot.fx = Math.min(1, Math.max(0, drag.fx - dx));
-        slot.fy = Math.min(1, Math.max(0, drag.fy - dy));
+        slot.fx = Math.max(0, Math.min(1, drag.fx - dx));
+        slot.fy = Math.max(0, Math.min(1, drag.fy - dy));
         paintPreview();
       }
     }
@@ -534,7 +534,7 @@ function bindEditor() {
       return; // no panel to zoom
     }
     const factor = ev.deltaY < 0 ? 1.08 : 0.93;
-    slot.zoom = Math.min(3, Math.max(1, slot.zoom * factor));
+    slot.zoom = Math.max(1, Math.min(3, slot.zoom * factor));
     const zoomEl = document.getElementById("zoom");
     if (zoomEl !== null) {
       zoomEl.value = slot.zoom;
@@ -566,5 +566,5 @@ if (scene === null || scene === "") {
   syncControls();
   paintPreview();
 } else {
-  runShot(scene, params, { canvas: canvas, state: state, photos: photos, loadSamplePhotos: loadSamplePhotos, loadImage: loadImage, renderPreview: paintPreview, bindEditor: bindEditor, syncControls: syncControls });
+  runShot(scene, params, { bindEditor: bindEditor, canvas: canvas, loadImage: loadImage, loadSamplePhotos: loadSamplePhotos, photos: photos, renderPreview: paintPreview, state: state, syncControls: syncControls });
 }

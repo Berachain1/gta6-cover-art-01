@@ -16,41 +16,41 @@
 // that same band before posterising, so faces stay warm while the
 // shadows keep their violet depth.
 
-function clampByte(n) {
-  return Math.min(255, Math.max(0, n));
+function clampToByte(n) {
+  return Math.max(0, Math.min(255, n));
 }
 
-// Palette stops per grade, as {at, r, g, b} stops the lookup reads.
+// Palette stops per grade, as {r, g, b, at} stops the lookup reads.
 export const GRADE_PALETTES = {
   sunset: [
-    { at: 0.0, r: 26, g: 8, b: 46 },
-    { at: 0.28, r: 100, g: 40, b: 70 },
-    { at: 0.55, r: 220, g: 130, b: 80 },
-    { at: 0.78, r: 250, g: 160, b: 90 },
-    { at: 1.0, r: 255, g: 210, b: 63 },
+    { r: 26, g: 8, b: 46, at: 0 },
+    { r: 100, g: 40, b: 70, at: 0.28 },
+    { r: 220, g: 130, b: 80, at: 0.55 },
+    { r: 250, g: 160, b: 90, at: 0.78 },
+    { r: 255, g: 210, b: 63, at: 1 },
   ],
   neon: [
-    { at: 0.0, r: 10, g: 8, b: 48 },
-    { at: 0.3, r: 74, g: 20, b: 120 },
-    { at: 0.55, r: 168, g: 38, b: 150 },
-    { at: 0.78, r: 255, g: 64, b: 160 },
-    { at: 1.0, r: 64, g: 224, b: 208 },
+    { r: 10, g: 8, b: 48, at: 0 },
+    { r: 74, g: 20, b: 120, at: 0.3 },
+    { r: 168, g: 38, b: 150, at: 0.55 },
+    { r: 255, g: 64, b: 160, at: 0.78 },
+    { r: 64, g: 224, b: 208, at: 1 },
   ],
   golden: [
-    { at: 0.0, r: 40, g: 20, b: 8 },
-    { at: 0.3, r: 122, g: 62, b: 18 },
-    { at: 0.55, r: 214, g: 122, b: 32 },
-    { at: 0.8, r: 255, g: 176, b: 64 },
-    { at: 1.0, r: 255, g: 236, b: 160 },
+    { r: 40, g: 20, b: 8, at: 0 },
+    { r: 122, g: 62, b: 18, at: 0.3 },
+    { r: 214, g: 122, b: 32, at: 0.55 },
+    { r: 255, g: 176, b: 64, at: 0.8 },
+    { r: 255, g: 236, b: 160, at: 1 },
   ],
   // Warm mids on purpose — coral-orange at 0.55, not magenta-pink —
   // so skin in the poster-ink pass reads sun-warmed instead of purple.
   ink: [
-    { at: 0.0, r: 22, g: 6, b: 38 },
-    { at: 0.3, r: 132, g: 38, b: 62 },
-    { at: 0.55, r: 224, g: 72, b: 84 },
-    { at: 0.78, r: 255, g: 138, b: 58 },
-    { at: 1.0, r: 255, g: 214, b: 92 },
+    { r: 22, g: 6, b: 38, at: 0 },
+    { r: 132, g: 38, b: 62, at: 0.3 },
+    { r: 224, g: 72, b: 84, at: 0.55 },
+    { r: 255, g: 138, b: 58, at: 0.78 },
+    { r: 255, g: 214, b: 92, at: 1 },
   ],
 };
 
@@ -60,16 +60,16 @@ export const GRADE_PALETTES = {
  * (1 = full gradient map).
  */
 export function buildGradeLUT(grade, strength = 0.62) {
-  const st = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
+  const stops = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
   const lut = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
   for (let v = 0; v < 256; v++) {
     const p = v / 255;
-    let lo = st[0];
-    let hi = st[st.length - 1];
-    for (let i = 0; i + 1 < st.length; i++) {
-      if (p >= st[i].at && p <= st[i + 1].at) {
-        lo = st[i];
-        hi = st[i + 1];
+    let lo = stops[0];
+    let hi = stops[stops.length - 1];
+    for (let i = 0; i + 1 < stops.length; i++) {
+      if (p >= stops[i].at && p <= stops[i + 1].at) {
+        lo = stops[i];
+        hi = stops[i + 1];
         break;
       }
     }
@@ -113,8 +113,8 @@ export function warmSkinTones(img, amount = 0.5) {
     }
     // Triangle weight: full effect near brightness 140, fading to none at the edges.
     const wt = lum < 140 ? (lum - 70) / 70 : (215 - lum) / 75;
-    d[i] = clampByte(d[i] + redUp * wt);
-    d[i + 2] = clampByte(d[i + 2] - blueDown * wt);
+    d[i] = clampToByte(d[i] + redUp * wt);
+    d[i + 2] = clampToByte(d[i + 2] - blueDown * wt);
   }
   return img;
 }
@@ -132,9 +132,9 @@ export function warmHighlights(frame, amount = 0.5, cutoff = 175) {
       continue;
     }
     const wt = amount * ((lum - cutoff) / (255 - cutoff));
-    d[i] = clampByte(d[i] + 26 * wt);
-    d[i + 1] = clampByte(d[i + 1] + 8 * wt);
-    d[i + 2] = clampByte(d[i + 2] - 14 * wt);
+    d[i] = clampToByte(d[i] + 26 * wt);
+    d[i + 1] = clampToByte(d[i + 1] + 8 * wt);
+    d[i + 2] = clampToByte(d[i + 2] - 14 * wt);
   }
   return frame;
 }
@@ -158,7 +158,7 @@ export function saturateImageData(img, amt = 1.25) {
   for (let i = 0; i < d.length; i += 4) {
     const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
     for (let c = 0; c <= 2; c++) {
-      d[i + c] = clampByte(lum + (d[i + c] - lum) * amt);
+      d[i + c] = clampToByte(lum + (d[i + c] - lum) * amt);
     }
   }
   return img;

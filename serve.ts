@@ -1,49 +1,49 @@
-// A small static file server for the app/ directory, Node 22 using
-// only the standard library. It is there so the entry can be tried on
+// A tiny static file server for the app/ directory, Node 22 with
+// only the standard library. It exists so the entry can be tried on
 // a laptop with no build step at all: `node serve.ts` serves app/ on
 // http://localhost:8080. It serves the MIME types an offline web app
 // needs, turns away any path that escapes app/, and otherwise stays
 // out of the way — a local convenience, not a server for the public
 // internet.
 import { createServer } from "node:http";
-import { createReadStream, statSync } from "node:fs";
-import { extname, join, normalize, resolve, sep } from "node:path";
+import { statSync, createReadStream } from "node:fs";
+import { sep, resolve, normalize, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = resolve(fileURLToPath(new URL("./app", import.meta.url)));
-const args = process.argv.slice(2);
-const flagAt = args.indexOf("--port");
-const picked = flagAt === -1 ? 8080 : Number(args[flagAt + 1]);
-const port = Number.isInteger(picked) && picked > 0 && picked < 65536 ? picked : 8080;
+const appRoot = resolve(fileURLToPath(new URL("./app", import.meta.url)));
+const argv = process.argv.slice(2);
+const flagIdx = argv.indexOf("--port");
+const chosen = flagIdx === -1 ? 8080 : Number(argv[flagIdx + 1]);
+const port = Number.isInteger(chosen) && chosen > 0 && chosen < 65536 ? chosen : 8080;
 
 // MIME types by extension, kept as a plain lookup table.
-const MIME = {
-  '.woff2': 'font/woff2',
-  '.woff': 'font/woff',
-  '.webp': 'image/webp',
-  '.wav': 'audio/wav',
-  '.wasm': 'application/wasm',
-  '.txt': 'text/plain; charset=utf-8',
-  '.ttf': 'font/ttf',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.otf': 'font/otf',
-  '.ogg': 'audio/ogg',
-  '.mp3': 'audio/mpeg',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.ico': 'image/x-icon',
-  '.html': 'text/html; charset=utf-8',
-  '.gif': 'image/gif',
-  '.css': 'text/css; charset=utf-8',
+const TYPES = {
   '.bin': 'application/octet-stream',
+  '.css': 'text/css; charset=utf-8',
+  '.gif': 'image/gif',
+  '.html': 'text/html; charset=utf-8',
+  '.ico': 'image/x-icon',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.otf': 'font/otf',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
+  '.wasm': 'application/wasm',
+  '.wav': 'audio/wav',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
 };
 
-function mimeFor(file) {
-  return MIME[extname(file).toLowerCase()] ?? "application/octet-stream";
+function mimeType(file) {
+  return TYPES[extname(file).toLowerCase()] ?? "application/octet-stream";
 }
 
 createServer((req, res) => {
@@ -56,8 +56,8 @@ createServer((req, res) => {
     return;
   }
   path = path.endsWith("/") ? path + "index.html" : path;
-  const file = resolve(join(root, normalize(path)));
-  const ok = file === root || file.startsWith(root + sep);
+  const file = resolve(join(appRoot, normalize(path)));
+  const ok = file === appRoot || file.startsWith(appRoot + sep);
   if (!ok) {
     res.writeHead(403).end("forbidden");
     return;
@@ -74,9 +74,9 @@ createServer((req, res) => {
   }
   const bytes = info.size;
   res.writeHead(200, {
-    "content-type": mimeFor(file),
-    "content-length": bytes,
     "cache-control": "no-store",
+    "content-length": bytes,
+    "content-type": mimeType(file),
   });
   createReadStream(file).pipe(res);
 }).listen(port, "127.0.0.1", () => {
