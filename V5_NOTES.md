@@ -1,6 +1,6 @@
-# V5 — the final round before submit (gta6-cover-art-01)
+# V5 — the last round before submit (gta6-cover-art-01)
 
-State: HEAD still `fb3c0fc`, nothing submitted, pushed or committed — v5 lives only in the worktree. The recording (`01a1f3ee-5b16-772e-b03a-8d8309487db3`, PID 11313) is still running and untouched. Deadline: Saturday 21 Nov, 17:30 WIB. Quota: a full 3/3. Bos's rule stands — SUBMIT TERAKHIR = FINAL, no submit just to measure; the work has to be right first.
+Status: HEAD is still `fb3c0fc`, nothing submitted, pushed or committed — v5 exists only in the worktree. The recording (`01a1f3ee-5b16-772e-b03a-8d8309487db3`, PID 11313) is still running and untouched. Deadline: Saturday 21 Nov, 17:30 WIB. Quota: a full 3/3. Bos's rule stands — SUBMIT TERAKHIR = FINAL, no submit just to measure; the work has to be right first.
 
 ## The verdict
 
