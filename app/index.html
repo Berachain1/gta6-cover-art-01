@@ -12,13 +12,15 @@
      where the cover gets painted; everything under .controls edits the
      state that main.js keeps. -->
 <header class="topbar">
-  <div class="brand"><span class="logo">PH</span>
+  <div class="brand">
+    <span class="logo">PH</span>
     <div>
       <h1>PALM HEAT · COVER STUDIO</h1>
       <p>Your photos, drawn as poster cover art — offline, nothing uploads.</p>
     </div>
   </div>
-  <div class="top-actions"><button id="undo" type="button" disabled>↩ Undo</button>
+  <div class="top-actions">
+    <button id="undo" type="button" disabled>↩ Undo</button>
     <button id="redo" type="button" disabled>↪ Redo</button>
     <button id="export-all" type="button" class="primary">Export all 3 sizes</button>
   </div>
@@ -32,18 +34,22 @@
       </label>
       <div id="dropzone">…or drop photos here — they never leave this machine</div>
       <div class="strip" id="photo-strip" aria-label="Photos — click to put into the selected panel"></div>
-      <label class="check"><input id="one-photo" type="checkbox"> One photo, all panels</label>
+      <label class="check">
+        <input id="one-photo" type="checkbox"> One photo, all panels
+      </label>
     </div>
     <div class="group">
       <h2>2 · Layout &amp; grade</h2>
-      <div class="pick" id="layout-pick"><button class="active" type="button" data-layout="chaos">Chaos Key-Art</button>
+      <div class="pick" id="layout-pick">
+        <button class="active" type="button" data-layout="chaos">Chaos Key-Art</button>
         <button type="button" data-layout="hero-vice">Hero Vice</button>
         <button type="button" data-layout="vice-grid">Vice Grid</button>
         <button type="button" data-layout="hero-three">Hero + Three</button>
         <button type="button" data-layout="tilted">Tilted</button>
         <button type="button" data-layout="full-bleed">Full Bleed</button>
       </div>
-      <div class="pick" id="grade-pick"><button type="button" data-grade="ink">Poster Ink</button>
+      <div class="pick" id="grade-pick">
+        <button type="button" data-grade="ink">Poster Ink</button>
         <button class="active" type="button" data-grade="sunset">Sunset</button>
         <button type="button" data-grade="neon">Neon Night</button>
         <button type="button" data-grade="golden">Golden Hour</button>
@@ -51,13 +57,25 @@
     </div>
     <div class="group">
       <h2>3 · Words</h2>
-      <label>Title <input id="title" type="text" value="PALM HEAT" maxlength="24"></label>
-      <label>Subtitle (script) <input id="subtitle" type="text" value="where the sun never sets" maxlength="40"></label>
-      <label>Place <input id="place" type="text" value="CORAL BAY" maxlength="20"></label>
-      <label>Tagline <input id="tagline" type="text" value="EVERY STREET HAS A STORY" maxlength="48"></label>
-      <label class="check"><input id="captions" type="checkbox" checked> Panel captions</label>
-      <div class="heat-row"><span>HEAT</span>
-        <div class="stars" id="heat-pick"><button type="button" aria-label="Heat 1">★</button>
+      <label>Title
+        <input id="title" type="text" value="PALM HEAT" maxlength="24">
+      </label>
+      <label>Subtitle (script)
+        <input id="subtitle" type="text" value="where the sun never sets" maxlength="40">
+      </label>
+      <label>Place
+        <input id="place" type="text" value="CORAL BAY" maxlength="20">
+      </label>
+      <label>Tagline
+        <input id="tagline" type="text" value="EVERY STREET HAS A STORY" maxlength="48">
+      </label>
+      <label class="check">
+        <input id="captions" type="checkbox" checked> Panel captions
+      </label>
+      <div class="heat-row">
+        <span>HEAT</span>
+        <div class="stars" id="heat-pick">
+          <button type="button" aria-label="Heat 1">★</button>
           <button type="button" aria-label="Heat 2">★</button>
           <button type="button" aria-label="Heat 3">★</button>
           <button type="button" aria-label="Heat 4">★</button>
@@ -68,12 +86,15 @@
     <div class="group">
       <h2>4 · Selected panel</h2>
       <p class="hint">Click a panel on the cover, drag it to pan, scroll to zoom.</p>
-      <label>Zoom <input id="zoom" type="range" value="1.15" min="1" max="3" step="0.05"></label>
+      <label>Zoom
+        <input id="zoom" type="range" value="1.15" min="1" max="3" step="0.05">
+      </label>
       <button id="cycle-photo" type="button">Next photo in this panel</button>
     </div>
     <div class="group">
       <h2>5 · Export</h2>
-      <div class="pick" id="size-pick"><button class="active" type="button" data-size="landscape">1920 × 1080</button>
+      <div class="pick" id="size-pick">
+        <button class="active" type="button" data-size="landscape">1920 × 1080</button>
         <button type="button" data-size="portrait">1080 × 1350</button>
         <button type="button" data-size="square">1080 × 1080</button>
       </div>

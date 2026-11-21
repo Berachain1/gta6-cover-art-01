@@ -1,14 +1,14 @@
 # Palm Heat Cover Studio — a GTA 6 cover maker
 
-Pick a sunset hero photo, lay it across six multi-panel cover designs, wash one of four grades over it, drag every panel where you want it — then export the finished cover as a PNG. Everything happens in the browser; nothing uploads anywhere.
+Choose a sunset hero photo, lay it across six multi-panel cover designs, wash one of four grades over it, drag every panel where you want it — then export the finished cover as a PNG. Everything happens in the browser; nothing uploads anywhere.
 
 [![make.fun bounty](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![dev rank](https://make.fun/badge/gta6-cover-art-01/berachain1/gta6-cover-art-01/rank.svg)](https://make.fun/bounty/gta6-cover-art-01/leaderboard)
 [![reward](https://make.fun/badge/gta6-cover-art-01/berachain1/gta6-cover-art-01/reward.svg)](https://make.fun/bounty/gta6-cover-art-01)
 
-This is my entry for the [gta6-cover-art-01 bounty on make.fun](https://make.fun/bounty/gta6-cover-art-01). Want to try make.fun yourself? Join through my referral link: https://make.fun/r/tmeqzjwq
+My entry for the [gta6-cover-art-01 bounty on make.fun](https://make.fun/bounty/gta6-cover-art-01). Want to try make.fun yourself? Join through my referral link: https://make.fun/r/tmeqzjwq
 
-## Inside
+## What it does
 
 - Six multi-panel cover designs, plus four grades — gradient-map looks and a poster-ink treatment
 - A live editor: crop and shift any panel, with undo and redo

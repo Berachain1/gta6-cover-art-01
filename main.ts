@@ -22,25 +22,19 @@
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
 import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
-import {
-  join,
-} from "node:path";
-import {
-  fileURLToPath,
-} from "node:url";
-import {
-  buildDossier,
-} from "./vendor/makefun-app.ts";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { buildDossier } from "./vendor/makefun-app.ts";
 
-const baseDir = fileURLToPath(new URL("./", import.meta.url));
-const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const appFolder = join(baseDir, "app");
-const shotsFolder = join(baseDir, "screenshots");
+const root = fileURLToPath(new URL("./", import.meta.url));
+const out = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const appDir = join(root, "app");
+const shotsDir = join(root, "screenshots");
 
-mkdirSync(outDir, { recursive: true });
-mkdirSync(join(outDir, "screenshots"), { recursive: true });
-cpSync(appFolder, join(outDir, "app"), { recursive: true });
-existsSync(shotsFolder) && cpSync(shotsFolder, join(outDir, "screenshots"), { recursive: true });
+mkdirSync(out, { recursive: true });
+mkdirSync(join(out, "screenshots"), { recursive: true });
+cpSync(appDir, join(out, "app"), { recursive: true });
+existsSync(shotsDir) && cpSync(shotsDir, join(out, "screenshots"), { recursive: true });
 
 // Limits copied from the scorer's own reference/gate.json. Only
 // text_max_bytes shapes the byte count; the rest mirror refusals the
@@ -49,11 +43,11 @@ existsSync(shotsFolder) && cpSync(shotsFolder, join(outDir, "screenshots"), { re
 // altogether; any path under app/ longer than 1000 bytes. app/ is
 // tallied beside /output's own 1000-entry cap, its screenshots/ and
 // dossier.json. (Second pass: option keys reordered, values untouched.)
-const dossier = buildDossier(outDir, {
-  text_max_bytes: 163840,
-  screenshots: { max: 4, max_bytes: 262144 },
-  app_path_max_bytes: 1000,
-  app_max_files: 993,
+const doc = buildDossier(out, {
   app_max_bytes: 50331648,
+  app_max_files: 993,
+  app_path_max_bytes: 1000,
+  screenshots: { max_bytes: 262144, max: 4 },
+  text_max_bytes: 163840,
 });
-writeFileSync(join(outDir, "dossier.json"), dossier);
+writeFileSync(join(out, "dossier.json"), doc);

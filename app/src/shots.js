@@ -11,80 +11,80 @@
 import { drawCoverGrid } from "./cover.js";
 
 // Post sizes for the cover scene: [width, height] in pixels.
-const POST_SIZES = new Map([
-  ["portrait", [1080, 1350]], // tall post
-  ["square", [1080, 1080]], // square post
-  ["landscape", [1920, 1080]], // wide post
-]);
+const SIZE_MAP = {
+  portrait: [1080, 1350],
+  square: [1080, 1080],
+  landscape: [1920, 1080],
+};
 
 // Query keys copied straight onto state fields, in order.
-const QUERY_FIELDS = ["layout", "grade", "title", "size"];
+const PARAM_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
-function applyQueryParams(params, st) {
-  for (const key of QUERY_FIELDS) {
-    const value = params.get(key);
-    if (value !== null && value !== "") {
-      st[key] = value;
+function applyQueryParams(q, state) {
+  for (const k of PARAM_KEYS) {
+    const v = q.get(k);
+    if (v !== null && v !== "") {
+      state[k] = v;
     }
   }
-  const subtitle = params.get("subtitle");
-  if (subtitle !== null) {
-    st.subtitle = subtitle;
+  const sub = q.get("subtitle");
+  if (sub !== null) {
+    state.subtitle = sub;
   }
 }
 
 /** Loads both display faces explicitly before anything is drawn. */
-async function primeFonts() {
+async function loadFaces() {
   await document.fonts.ready;
   // fonts.ready can settle before Anton/Pacifico have even started
   // loading (nothing on the page uses them until the canvas does), and
   // a draw that measures with the fallback font comes out small — so
   // load both faces explicitly before anything is measured or drawn.
-  await document.fonts.load("40px Pacifico");
   await document.fonts.load("100px Anton");
+  await document.fonts.load("40px Pacifico");
 }
 
 /** Paints the cover scene onto the page canvas at the post size. */
-async function renderCoverShot(params, kit) {
+async function paintCoverScene(q, kit) {
   document.body.classList.add("shot-cover");
-  applyQueryParams(params, kit.state);
-  await primeFonts();
+  applyQueryParams(q, kit.state);
+  await loadFaces();
   await kit.loadSamplePhotos();
-  const wanted = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
-  const dims = POST_SIZES.get(wanted) ?? POST_SIZES.get("landscape");
-  kit.canvas.width = dims[0];
-  kit.canvas.height = dims[1];
-  drawCoverGrid(kit.canvas, kit.state, kit.photos); // paint it
-  document.title = "READY"; // cover scene done
-  window.__shotReady = true; // cover scene done
+  const sizeKey = kit.state.size === undefined || kit.state.size === "" ? "landscape" : kit.state.size;
+  const wh = SIZE_MAP[sizeKey] ?? SIZE_MAP.landscape;
+  kit.canvas.width = wh[0];
+  kit.canvas.height = wh[1];
+  drawCoverGrid(kit.canvas, kit.state, kit.photos);
+  document.title = "READY";
+  window.__shotReady = true;
 }
 
 /** Paints the editor scene: controls wired, preview drawn. */
-async function renderEditorShot(params, kit) {
-  applyQueryParams(params, kit.state);
-  await primeFonts();
+async function paintEditorScene(q, kit) {
+  applyQueryParams(q, kit.state);
+  await loadFaces();
   await kit.loadSamplePhotos();
-  kit.bindEditor(); // wire controls
-  kit.syncControls(); // reflect state
-  kit.renderPreview(); // draw once
-  document.title = "READY"; // editor scene done
-  window.__shotReady = true; // editor scene done
+  kit.bindEditor();
+  kit.syncControls();
+  kit.renderPreview();
+  document.title = "READY";
+  window.__shotReady = true;
 }
 
 // Portrait and square are the cover scene with the size preset.
-const SHOT_SIZE_PRESET = { cover: null, portrait: "portrait", square: "square" };
+const SIZE_PRESETS = { square: "square", portrait: "portrait", cover: null };
 
-export async function runShot(shot, params, kit) {
-  if (shot === "editor") {
-    await renderEditorShot(params, kit);
-  } else if (shot === "cover" || shot === "portrait" || shot === "square") {
-    const preset = SHOT_SIZE_PRESET[shot];
-    if (preset !== null) {
-      kit.state.size = preset;
+export async function runShot(scene, q, kit) {
+  if (scene === "editor") {
+    await paintEditorScene(q, kit);
+  } else if (scene === "cover" || scene === "portrait" || scene === "square") {
+    const size = SIZE_PRESETS[scene];
+    if (size !== null) {
+      kit.state.size = size;
     }
-    await renderCoverShot(params, kit);
+    await paintCoverScene(q, kit);
   } else {
-    window.__shotReady = true; // unknown shot: ready at once
+    window.__shotReady = true;
   }
 }
