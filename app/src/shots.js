@@ -1,4 +1,5 @@
-// shots.js — the fixed scenes used for screenshots, picked by `?shot=`.
+// shots.js — the fixed scenes used for screenshots, picked by
+// `?shot=`.
 //
 //   ?shot=cover[&layout=..&grade=..&title=..&size=landscape|portrait|square]
 //       just the exported cover, edge to edge — the same drawing the
@@ -22,12 +23,12 @@ const STATE_KEYS = ["layout", "grade", "title", "size"];
 
 /** Copies the recognised ?key=value pairs from the URL into state. */
 function copyQueryToState(q, state) {
-  STATE_KEYS.forEach((k) => {
+  for (const k of STATE_KEYS) {
     const v = q.get(k);
     if (v !== null && v !== "") {
       state[k] = v;
     }
-  });
+  }
   const sub = q.get("subtitle");
   if (sub !== null) {
     state.subtitle = sub;
@@ -41,8 +42,8 @@ async function ensureFaces() {
   // loading (nothing on the page uses them until the canvas does), and
   // a draw that measures with the fallback font comes out small — so
   // load both faces explicitly before anything is measured or drawn.
-  await document.fonts.load('100px Anton');
-  await document.fonts.load('40px Pacifico');
+  await document.fonts.load("100px Anton");
+  await document.fonts.load("40px Pacifico");
 }
 
 /** Paints the cover scene onto the page canvas at the post size. */
@@ -76,25 +77,25 @@ async function renderEditorShot(q, kit) {
 }
 
 // Portrait and square are the cover scene with the size preset.
-const SCENE_SIZES = { cover: null, portrait: "portrait", square: "square" };
+function coverWithSize(size) {
+  return async (q, kit) => {
+    kit.state.size = size;
+    await renderCoverShot(q, kit);
+  };
+}
+
+const SCENES = {
+  editor: renderEditorShot,
+  cover: renderCoverShot,
+  portrait: coverWithSize("portrait"),
+  square: coverWithSize("square"),
+};
 
 export async function runShot(scene, q, kit) {
-  switch (scene) {
-    case "editor":
-      await renderEditorShot(q, kit);
-      break;
-    case "cover":
-    case "portrait":
-    case "square": {
-      const size = SCENE_SIZES[scene];
-      if (size !== null) {
-        kit.state.size = size;
-      }
-      await renderCoverShot(q, kit);
-      break;
-    }
-    default:
-      window.__shotReady = true;
-      break;
+  const run = SCENES[scene];
+  if (run === undefined) {
+    window.__shotReady = true;
+    return;
   }
+  await run(q, kit);
 }
