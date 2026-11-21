@@ -1,88 +1,104 @@
-// grades.js — colour grades for every cover panel.
+// grades.js — the colour work for every panel of Palm Heat Cover Studio.
 //
-// A grade works as a gradient map: a pixel's brightness picks a colour
-// from the grade's palette, and that colour is blended back toward the
-// pixel it came from, so a photo keeps its own identity instead of
-// going flat. Poster Ink adds a comic-book pass on top: a few flat
-// posterised levels, halftone dots, film grain, and a vignette.
-// Everything runs on plain 2D canvas pixels, so it works on any
-// photo — samples, phone shots, anything — with no network and no
-// library.
+// Every panel photo passes through a grade before it lands on the
+// cover. The grade is a brightness-driven tint: a pixel's luminance
+// selects a colour out of the grade's ramp, and that colour is mixed
+// back toward the pixel it came from, so the photograph keeps its own
+// character instead of going flat. Poster Ink layers a comic treatment
+// over the same idea — a handful of flat posterised steps, print
+// halftone, a dusting of film grain, and a darkened edge — while the
+// sunset grade stays photographic on purpose: a gradient map keyed on
+// brightness alone would trade each pixel's hue for a tint, turning
+// the pink car cream and the sea grey, so sunset lifts saturation and
+// warms the mids and highlights instead.
 //
-// The ink palette is warm in the mid-tones on purpose. Skin lives in
-// the middle of the brightness range, and a magenta-heavy map turns
-// faces purple; the ink stops below push mids toward coral-orange
-// instead, and warmSkinTones() adds a small red lift and blue cut in
-// that same band before posterising, so faces stay warm while the
-// shadows keep their violet depth.
+// The ink ramp is warm in the middle on purpose. Faces live in the
+// middle of the brightness range, and a magenta-heavy map turns them
+// purple; the ink stops below push the mids toward coral-orange, and
+// warmSkinTones adds a small red lift with a blue cut through the
+// same band before posterising, so faces stay sun-warmed while the
+// shadows keep their violet depth. All of it runs on plain 2D canvas
+// pixels — no network, no library — so it works on any photo the
+// studio is handed, samples or phone shots alike.
 
-// Rec. 601 brightness of the pixel starting at `k` in `data`.
+// Rec. 601 luminance of the pixel that starts at index `k` in `data`.
 function luma(data, k) {
-  return data[k] * 0.299 + data[k + 1] * 0.587 + data[k + 2] * 0.114;
+  return 0.299 * data[k] + 0.587 * data[k + 1] + 0.114 * data[k + 2];
 }
 
 function clamp255(n) {
-  return Math.max(0, Math.min(255, n));
+  if (n < 0) {
+    return 0;
+  }
+  return n > 255 ? 255 : n;
 }
 
 function clampNum(v, lo, hi) {
-  return Math.min(hi, Math.max(lo, v));
+  if (v < lo) {
+    return lo;
+  }
+  return v > hi ? hi : v;
 }
 
-// Palette stops per grade, as [at, r, g, b] rows the lookup reads.
+// One ramp per grade: five stops, each a position plus a colour.
+// The lookup reads them by name, so the ramp reads as a table of
+// named stops rather than a bare row of numbers.
 export const GRADE_PALETTES = {
   sunset: [
-    [0, 26, 8, 46],
-    [0.28, 100, 40, 70],
-    [0.55, 220, 130, 80],
-    [0.78, 250, 160, 90],
-    [1, 255, 210, 63],
+    { at: 0, r: 26, g: 8, b: 46 },
+    { at: 0.28, r: 100, g: 40, b: 70 },
+    { at: 0.55, r: 220, g: 130, b: 80 },
+    { at: 0.78, r: 250, g: 160, b: 90 },
+    { at: 1, r: 255, g: 210, b: 63 },
   ],
   neon: [
-    [0, 10, 8, 48],
-    [0.3, 74, 20, 120],
-    [0.55, 168, 38, 150],
-    [0.78, 255, 64, 160],
-    [1, 64, 224, 208],
+    { at: 0, r: 10, g: 8, b: 48 },
+    { at: 0.3, r: 74, g: 20, b: 120 },
+    { at: 0.55, r: 168, g: 38, b: 150 },
+    { at: 0.78, r: 255, g: 64, b: 160 },
+    { at: 1, r: 64, g: 224, b: 208 },
   ],
   golden: [
-    [0, 40, 20, 8],
-    [0.3, 122, 62, 18],
-    [0.55, 214, 122, 32],
-    [0.8, 255, 176, 64],
-    [1, 255, 236, 160],
+    { at: 0, r: 40, g: 20, b: 8 },
+    { at: 0.3, r: 122, g: 62, b: 18 },
+    { at: 0.55, r: 214, g: 122, b: 32 },
+    { at: 0.8, r: 255, g: 176, b: 64 },
+    { at: 1, r: 255, g: 236, b: 160 },
   ],
   // Warm mids on purpose — coral-orange at 0.55, not magenta-pink —
   // so skin in the poster-ink pass reads sun-warmed instead of purple.
   ink: [
-    [0, 22, 6, 38],
-    [0.3, 132, 38, 62],
-    [0.55, 224, 72, 84],
-    [0.78, 255, 138, 58],
-    [1, 255, 214, 92],
+    { at: 0, r: 22, g: 6, b: 38 },
+    { at: 0.3, r: 132, g: 38, b: 62 },
+    { at: 0.55, r: 224, g: 72, b: 84 },
+    { at: 0.78, r: 255, g: 138, b: 58 },
+    { at: 1, r: 255, g: 214, b: 92 },
   ],
 };
 
-// The two palette stops bracketing `pos` (0..1) in `ramp`. Each stop
-// is [at, r, g, b], so index 0 is the position and 1..3 are colours.
+// The two ramp stops that bracket brightness `pos` (0..1): the last
+// stop at or below it and the first stop at or above it. Outside the
+// ramp's ends the first and last stops pair up, so the result is
+// always a usable pair.
 function findStops(ramp, pos) {
   let low = ramp[0];
   let high = ramp[ramp.length - 1];
   for (let k = 0; k + 1 < ramp.length; k++) {
-    if (pos < ramp[k][0] || pos > ramp[k + 1][0]) {
-      continue;
+    const a = ramp[k];
+    const b = ramp[k + 1];
+    if (pos >= a.at && pos <= b.at) {
+      low = a;
+      high = b;
+      break;
     }
-    low = ramp[k];
-    high = ramp[k + 1];
-    break;
   }
   return [low, high];
 }
 
 /**
- * Builds one lookup table per channel for `grade`. `strength` 0..1
- * sets how far the mapped colour replaces the original pixel
- * (1 = full gradient map).
+ * One lookup table per channel for `grade`. `strength` 0..1 sets how
+ * far the mapped colour replaces the original pixel (1 = a full
+ * gradient map, the pixel's own colour gone entirely).
  */
 export function buildGradeLUT(grade, strength = 0.62) {
   const ramp = GRADE_PALETTES[grade] ?? GRADE_PALETTES.sunset;
@@ -91,81 +107,72 @@ export function buildGradeLUT(grade, strength = 0.62) {
   for (let val = 0; val < 256; val++) {
     const pos = val / 255;
     const [low, high] = findStops(ramp, pos);
-    const gap = high[0] - low[0];
-    let mix = 0;
-    if (gap !== 0) {
-      mix = (pos - low[0]) / gap;
+    const span = high.at - low.at;
+    const mix = span === 0 ? 0 : (pos - low.at) / span;
+    for (let c = 0; c < chanNames.length; c++) {
+      const chan = chanNames[c];
+      const mapped = low[chan] + (high[chan] - low[chan]) * mix;
+      table[chan][val] = Math.round(val + (mapped - val) * strength);
     }
-    chanNames.forEach((chan, idx) => {
-      const stopIdx = idx + 1;
-      const col = low[stopIdx] + (high[stopIdx] - low[stopIdx]) * mix;
-      table[chan][val] = Math.round(val + (col - val) * strength);
-    });
   }
   return table;
 }
 
-/** Runs every pixel through the grade LUT, keyed by brightness. */
+/** Pushes every pixel of `pic` through the grade LUT, keyed by brightness. */
 export function applyGradientGrade(pic, grade, strength) {
   const table = buildGradeLUT(grade, strength);
   const data = pic.data;
-  let k = 0;
-  while (k < data.length) {
+  for (let k = 0; k < data.length; k += 4) {
     const bright = luma(data, k) | 0;
     data[k] = table.r[bright];
     data[k + 1] = table.g[bright];
     data[k + 2] = table.b[bright];
-    k += 4;
   }
   return pic;
 }
 
 /**
- * Warms the skin band: pixels whose brightness sits in the middle range
- * get a red lift and a blue cut, fading to nothing at the band edges.
- * It runs before posterising so the poster-ink grade keeps faces warm
- * rather than pushing them toward violet. `amount` 0..1; 0.5 is gentle.
+ * Warms the skin band: pixels whose brightness sits in the middle
+ * range get a red lift and a blue cut, fading to nothing at the band
+ * edges. It runs before posterising so the poster-ink grade keeps
+ * faces warm rather than pushing them toward violet. `amount` 0..1;
+ * 0.5 is gentle.
  */
 export function warmSkinTones(pic, amount = 0.5) {
   const data = pic.data;
-  const redLift = amount * 14;
-  const blueCut = amount * 12;
-  let k = 0;
-  while (k < data.length) {
+  const redLift = 14 * amount;
+  const blueCut = 12 * amount;
+  for (let k = 0; k < data.length; k += 4) {
     const bright = luma(data, k);
-    if (bright >= 70 && bright <= 215) {
-      // Triangle weight: full effect near brightness 140, fading to none at the edges.
-      let w;
-      if (bright < 140) {
-        w = (bright - 70) / 70;
-      } else {
-        w = (215 - bright) / 75;
-      }
-      data[k] = clamp255(data[k] + redLift * w);
-      data[k + 2] = clamp255(data[k + 2] - blueCut * w);
+    if (bright < 70 || bright > 215) {
+      continue;
     }
-    k += 4;
+    // Triangle weight: full effect near brightness 140, fading to
+    // nothing at the edges of the band.
+    const w = bright < 140 ? (bright - 70) / 70 : (215 - bright) / 75;
+    data[k] = clamp255(data[k] + redLift * w);
+    data[k + 2] = clamp255(data[k + 2] - blueCut * w);
   }
   return pic;
 }
 
 /**
- * Warms the bright end: pixels brighter than `cutoff` get a red/orange
- * lift that grows with brightness, so skies and highlights glow sunset
- * instead of staying pale blue-white. Only the sunset grade uses it.
+ * Warms the bright end: pixels brighter than `cutoff` get a red and
+ * orange lift that grows with brightness, so skies and highlights
+ * glow sunset instead of staying pale blue-white. Only the sunset
+ * grade uses it.
  */
 export function warmHighlights(frame, amount = 0.5, cutoff = 175) {
   const data = frame.data;
-  let k = 0;
-  while (k < data.length) {
+  for (let k = 0; k < data.length; k += 4) {
     const bright = luma(data, k);
-    if (bright > cutoff) {
-      const w = amount * ((bright - cutoff) / (255 - cutoff));
-      data[k] = clamp255(data[k] + 26 * w);
-      data[k + 1] = clamp255(data[k + 1] + 8 * w);
-      data[k + 2] = clamp255(data[k + 2] - 14 * w);
+    if (bright <= cutoff) {
+      continue;
     }
-    k += 4;
+    const w = amount * ((bright - cutoff) / (255 - cutoff));
+    data[k] = clamp255(data[k] + 26 * w);
+    data[k + 1] = clamp255(data[k + 1] + 8 * w);
+    data[k + 2] = clamp255(data[k + 2] - 14 * w);
   }
   return frame;
 }
@@ -174,13 +181,11 @@ export function warmHighlights(frame, amount = 0.5, cutoff = 175) {
 export function posterizeImageData(pic, levels = 5) {
   const data = pic.data;
   const gap = 255 / (levels - 1);
-  let k = 0;
-  while (k < data.length) {
-    [0, 1, 2].forEach((chan) => {
-      const val = Math.round(data[k + chan] / gap) * gap;
-      data[k + chan] = Math.round(val);
-    });
-    k += 4;
+  for (let k = 0; k < data.length; k += 4) {
+    for (let chan = 0; chan < 3; chan++) {
+      const stepped = Math.round(data[k + chan] / gap) * gap;
+      data[k + chan] = Math.round(stepped);
+    }
   }
   return pic;
 }
@@ -188,13 +193,11 @@ export function posterizeImageData(pic, levels = 5) {
 /** Pushes colours away from grey, in place (1 leaves them unchanged). */
 export function saturateImageData(pic, amt = 1.25) {
   const data = pic.data;
-  let k = 0;
-  while (k < data.length) {
+  for (let k = 0; k < data.length; k += 4) {
     const bright = luma(data, k);
-    [0, 1, 2].forEach((chan) => {
+    for (let chan = 0; chan < 3; chan++) {
       data[k + chan] = clamp255(bright + (data[k + chan] - bright) * amt);
-    });
-    k += 4;
+    }
   }
   return pic;
 }
@@ -202,26 +205,27 @@ export function saturateImageData(pic, amt = 1.25) {
 let halftoneTile = null;
 /** A reusable print-dot tile, denser toward one corner of a cell. */
 export function makeHalftonePattern(size = 96) {
-  if (halftoneTile === null) {
-    const tile = document.createElement("canvas");
-    tile.width = size;
-    tile.height = size;
-    const pen = tile.getContext("2d");
-    const cell = 12;
-    const rows = Math.floor(size / cell);
-    for (let ry = 0; ry < rows; ry++) {
-      for (let cx = 0; cx < rows; cx++) {
-        const rad = 1 + 1.1 * ((ry + cx) % 4);
-        const px = cx * cell + cell * 0.5;
-        const py = ry * cell + cell * 0.5;
-        pen.fillStyle = "rgba(20,4,32,0.55)";
-        pen.beginPath();
-        pen.arc(px, py, rad, 0, Math.PI * 2);
-        pen.fill();
-      }
-    }
-    halftoneTile = tile;
+  if (halftoneTile !== null) {
+    return halftoneTile;
   }
+  const tile = document.createElement("canvas");
+  tile.width = size;
+  tile.height = size;
+  const pen = tile.getContext("2d");
+  const cell = 12;
+  const rows = Math.floor(size / cell);
+  pen.fillStyle = "rgba(20,4,32,0.55)";
+  for (let ry = 0; ry < rows; ry++) {
+    for (let cx = 0; cx < rows; cx++) {
+      const rad = 1 + 1.1 * ((ry + cx) % 4);
+      const px = cx * cell + cell * 0.5;
+      const py = ry * cell + cell * 0.5;
+      pen.beginPath();
+      pen.arc(px, py, rad, 0, Math.PI * 2);
+      pen.fill();
+    }
+  }
+  halftoneTile = tile;
   return halftoneTile;
 }
 
@@ -238,24 +242,23 @@ export function applyHalftone(pen, w, h, alpha = 0.16) {
 let grainTile = null;
 /** A reusable neutral film-grain tile, built once. */
 export function makeGrainCanvas(size = 160) {
-  if (grainTile === null) {
-    const tile = document.createElement("canvas");
-    tile.width = size;
-    tile.height = size;
-    const pen = tile.getContext("2d");
-    const frame = pen.createImageData(size, size);
-    let k = 0;
-    while (k < frame.data.length) {
-      const val = 98 + Math.floor(40 * Math.random());
-      frame.data[k] = val;
-      frame.data[k + 1] = val;
-      frame.data[k + 2] = val;
-      frame.data[k + 3] = 255;
-      k += 4;
-    }
-    pen.putImageData(frame, 0, 0);
-    grainTile = tile;
+  if (grainTile !== null) {
+    return grainTile;
   }
+  const tile = document.createElement("canvas");
+  tile.width = size;
+  tile.height = size;
+  const pen = tile.getContext("2d");
+  const frame = pen.createImageData(size, size);
+  for (let k = 0; k < frame.data.length; k += 4) {
+    const val = 98 + Math.floor(40 * Math.random());
+    frame.data[k] = val;
+    frame.data[k + 1] = val;
+    frame.data[k + 2] = val;
+    frame.data[k + 3] = 255;
+  }
+  pen.putImageData(frame, 0, 0);
+  grainTile = tile;
   return grainTile;
 }
 
@@ -272,10 +275,11 @@ export function applyGrain(pen, w, h, alpha = 0.07) {
 
 /** Darkens the corners of a panel so it reads like a printed poster. */
 export function applyVignette(pen, w, h, amt = 0.28) {
-  const grad = pen.createRadialGradient(
-    0.5 * w, 0.5 * h, 0.32 * Math.min(w, h),
-    0.5 * w, 0.5 * h, 0.72 * Math.max(w, h),
-  );
+  const cx = 0.5 * w;
+  const cy = 0.5 * h;
+  const inner = 0.32 * Math.min(w, h);
+  const outer = 0.72 * Math.max(w, h);
+  const grad = pen.createRadialGradient(cx, cy, inner, cx, cy, outer);
   grad.addColorStop(0, "rgba(10,2,20,0)");
   grad.addColorStop(1, "rgba(10,2,20," + amt + ")");
   pen.save();
@@ -299,42 +303,42 @@ export function gradePanelImage(shot, pw, ph, crop, gradeName) {
   const pen = cv.getContext("2d");
   drawCroppedPhoto(pen, shot, 0, 0, pw, ph, crop);
   const frame = pen.getImageData(0, 0, cv.width, cv.height);
-  if (gradeName === "golden") {
-    applyGradientGrade(frame, "golden", 0.58);
-  } else if (gradeName === "neon") {
-    saturateImageData(frame, 1.3);
-    applyGradientGrade(frame, "neon", 0.6);
-  } else if (gradeName === "ink") {
-    saturateImageData(frame, 1.2);
-    applyGradientGrade(frame, "ink", 0.42);
-    warmSkinTones(frame, 0.8);
-    posterizeImageData(frame, 6);
-  } else {
-    // Sunset (the default) stays photographic — never a gradient map.
-    // A map swaps each pixel's hue for a brightness-derived tint (its
-    // LUT keys on brightness alone), so at any strength it turns the
-    // pink car cream and the sea grey. A saturation lift plus warm
-    // mids keeps each photo's own colour and gives the warm sunset
-    // feel the top covers have. The highlight lift is what makes
-    // skies glow orange like #1's instead of staying pale — it only
-    // touches the bright end, so mid-tone skin is untouched.
-    saturateImageData(frame, 1.18);
-    warmSkinTones(frame, 0.6);
-    warmHighlights(frame, 0.55);
+  switch (gradeName) {
+    case "golden":
+      applyGradientGrade(frame, "golden", 0.58);
+      break;
+    case "neon":
+      saturateImageData(frame, 1.3);
+      applyGradientGrade(frame, "neon", 0.6);
+      break;
+    case "ink":
+      saturateImageData(frame, 1.2);
+      applyGradientGrade(frame, "ink", 0.42);
+      warmSkinTones(frame, 0.8);
+      posterizeImageData(frame, 6);
+      break;
+    default:
+      // Sunset (the default) stays photographic — never a gradient
+      // map. A map swaps each pixel's hue for a brightness-derived
+      // tint (its LUT keys on brightness alone), so at any strength
+      // it turns the pink car cream and the sea grey. A saturation
+      // lift plus warm mids keeps each photo's own colour and gives
+      // the warm sunset feel the top covers have. The highlight lift
+      // is what makes skies glow orange like #1's instead of staying
+      // pale — it only touches the bright end, so mid-tone skin is
+      // untouched.
+      saturateImageData(frame, 1.18);
+      warmSkinTones(frame, 0.6);
+      warmHighlights(frame, 0.55);
+      break;
   }
   pen.putImageData(frame, 0, 0);
   if (gradeName === "ink") {
     applyHalftone(pen, cv.width, cv.height, 0.12);
   }
-  let dust = 0.06;
-  if (gradeName === "ink") {
-    dust = 0.09;
-  }
+  const dust = gradeName === "ink" ? 0.09 : 0.06;
   applyGrain(pen, cv.width, cv.height, dust);
-  let shade = 0.18;
-  if (gradeName === "ink") {
-    shade = 0.3;
-  }
+  const shade = gradeName === "ink" ? 0.3 : 0.18;
   applyVignette(pen, cv.width, cv.height, shade);
   return cv;
 }
@@ -350,7 +354,9 @@ export function drawCroppedPhoto(pen, shot, dx, dy, tw, th, crop = {}) {
   const fx0 = crop.fx ?? 0.5;
   const fy0 = crop.fy ?? 0.4;
   let zoom = crop.zoom ?? 1;
-  zoom = Math.max(1, zoom);
+  if (zoom < 1) {
+    zoom = 1;
+  }
   const scale = zoom * Math.max(tw / sw, th / sh);
   const srcW = tw / scale;
   const srcH = th / scale;

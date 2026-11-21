@@ -1,63 +1,50 @@
 // main.js — the editor behind Palm Heat Cover Studio.
 //
-// This module wires the whole studio: choosing and dropping in
-// photos, the bundled sample set, the layout and grade pickers, the
-// caption fields, per-panel cropping and positioning (click to select
-// a panel, drag to pan it, scroll to zoom), undo plus redo, and PNG
-// export in all three post sizes. A `?shot=` query in the URL swaps
-// the editor for a fixed screenshot scene instead — the scenes live
-// in ./shots.js.
+// This module wires the whole studio together: picking photos and
+// dropping new ones in, the bundled sample set, the layout and grade
+// pickers, the caption fields, per-panel cropping and positioning
+// (click a panel to select it, drag to pan it, scroll to zoom),
+// undo plus redo, and PNG export in all three post sizes. A `?shot=`
+// query in the URL swaps the editor for a fixed screenshot scene
+// instead — those scenes live in ./shots.js.
 
 import { layoutPanels, panelCount, drawCoverGrid, exportCoverPNG, LAYOUTS, GRADES, EXPORT_SIZES } from "./cover.js";
 import { runShot } from "./shots.js";
 
-
-// Builders for the data tables below: each returns the same object
-// the table used to spell out literally, so the tables read as rows.
-function shot(src, name) { return { src, name }; }
-function cap(place, time, line) { return { place, time, line }; }
-function crop(photo, fx, fy, zoom, sq) {
-  const c = { photo, fx, fy, zoom };
-  if (sq !== undefined) {
-    c.sq = { photo: sq[0], fx: sq[1], fy: sq[2], zoom: sq[3] };
-  }
-  return c;
-}
-
-// The sample photos the app ships with: {src, name} objects, name
-// being the label the strip shows under each thumbnail.
+// The sample photos the app ships with. Each row carries the file
+// path and the label the strip shows under its thumbnail.
 const SAMPLE_SHOTS = [
-  shot("samples/woman.jpg", "Woman · convertible"),
-  shot("samples/fisherman.jpg", "Fisherman · pier"),
-  shot("samples/neon.jpg", "Friends · neon street"),
-  shot("samples/rooftop.jpg", "Man · rooftop"),
-  shot("samples/boulevard.jpg", "Boulevard · kit"),
-  shot("samples/pier.jpg", "Pier · kit"),
-  shot("samples/car.jpg", "Orange car · deco street"),
-  shot("samples/coast.jpg", "Coast road · sunset"),
-  shot("samples/sunset.jpg", "Woman · sunset convertible"),
+  { src: "samples/woman.jpg", name: "Woman · convertible" },
+  { src: "samples/fisherman.jpg", name: "Fisherman · pier" },
+  { src: "samples/neon.jpg", name: "Friends · neon street" },
+  { src: "samples/rooftop.jpg", name: "Man · rooftop" },
+  { src: "samples/boulevard.jpg", name: "Boulevard · kit" },
+  { src: "samples/pier.jpg", name: "Pier · kit" },
+  { src: "samples/car.jpg", name: "Orange car · deco street" },
+  { src: "samples/coast.jpg", name: "Coast road · sunset" },
+  { src: "samples/sunset.jpg", name: "Woman · sunset convertible" },
 ];
 
-// Caption chips for the panels {place, time, line}, one per sample
-// photo. The wording is original — the same kind of location/time
-// chips the top-5 covers carry on theirs.
+// Caption chips for the panels, one per sample photo: a place, a
+// time and a line. The wording is original — the same kind of
+// location/time chips the top-5 covers carry on theirs.
 const CAPTIONS = [
-  cap("CORAL DRIVE", "6:47 PM", "ENGINE RUNNING"),
-  cap("PIER 26", "5:30 AM", "FIRST CAST"),
-  cap("NEON MILE", "11:50 PM", "NO BRAKES"),
-  cap("ROOFTOP 9", "8:30 PM", "CITY LIGHTS"),
-  cap("PALM ROW", "9:15 PM", "AFTER DARK"),
-  cap("TOWER 2", "6:10 PM", "GOLDEN HOUR"),
-  cap("DECO ROW", "7:05 PM", "TOP DOWN"),
-  cap("COAST ROAD", "6:58 PM", "LAST LIGHT"),
-  cap("CORAL DRIVE", "7:42 PM", "GOLDEN HOUR"),
+  { place: "CORAL DRIVE", time: "6:47 PM", line: "ENGINE RUNNING" },
+  { place: "PIER 26", time: "5:30 AM", line: "FIRST CAST" },
+  { place: "NEON MILE", time: "11:50 PM", line: "NO BRAKES" },
+  { place: "ROOFTOP 9", time: "8:30 PM", line: "CITY LIGHTS" },
+  { place: "PALM ROW", time: "9:15 PM", line: "AFTER DARK" },
+  { place: "TOWER 2", time: "6:10 PM", line: "GOLDEN HOUR" },
+  { place: "DECO ROW", time: "7:05 PM", line: "TOP DOWN" },
+  { place: "COAST ROAD", time: "6:58 PM", line: "LAST LIGHT" },
+  { place: "CORAL DRIVE", time: "7:42 PM", line: "GOLDEN HOUR" },
 ];
 
-// Default crop per panel, per layout. A crop is
-// {photo, fx, fy, zoom}, with an optional `sq` slot carrying the
-// square-only override as {photo, fx, fy, zoom}. fx/fy is the focus
-// point (0..1) inside the photo; zoom is >= 1. The crops are picked
-// so faces stay in frame and no panel shows an awkward body-part cut.
+// Default crop per panel, per layout. A crop is {photo, fx, fy,
+// zoom}, with an optional `sq` slot carrying the square-only
+// override as {photo, fx, fy, zoom}. fx/fy is the focus point (0..1)
+// inside the photo; zoom is >= 1. The crops are picked so faces stay
+// in frame and no panel shows an awkward body-part cut.
 //
 // hero-vice is MULTI-SUBJECT (v3): six different photos, one per
 // panel — the variety the top-5 covers have. The hero is the woman
@@ -66,12 +53,11 @@ const CAPTIONS = [
 // fisherman, the orange car and the coast road, each cropped so its
 // subject stays in frame.
 //
-// chaos is the v4 default: the top-3 key-art collage. Same six
-// photos as hero-vice (woman hero, rooftop man, neon couple,
-// fisherman, orange car, coast road), each cropped so its subject
-// stays in frame. v5: the hero is the SUNSET woman (photo 8, a
-// blazing sky — #1's glow was the one gap no layout fix could
-// close).
+// chaos is the v4 default: the top-3 key-art collage. Same six photos
+// as hero-vice (woman hero, rooftop man, neon couple, fisherman,
+// orange car, coast road), each cropped so its subject stays in
+// frame. v5: the hero is the SUNSET woman (photo 8, a blazing sky —
+// #1's glow was the one gap no layout fix could close).
 //
 // The 3-panel row in portrait and square runs P1 P2 P3, and the title
 // crashes over the whole row — a face in the LEFT column sits behind
@@ -90,61 +76,61 @@ const CAPTIONS = [
 // (drawCoverGrid, w === h).
 const DEFAULT_CROPS = {
   chaos: [
-    crop(8, 0.42, 0.32, 1.05),
-    crop(6, 0.55, 0.55, 1.15),
-    crop(2, 0.55, 0.42, 1.1),
-    crop(3, 0.48, 0.28, 1, [7, 0.45, 0.55, 1.15]),
-    crop(1, 0.48, 0.3, 1),
-    crop(7, 0.45, 0.55, 1.15),
+    { photo: 8, fx: 0.42, fy: 0.32, zoom: 1.05 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
+    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
+    { photo: 3, fx: 0.48, fy: 0.28, zoom: 1, sq: { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 } },
+    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
+    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
   ],
   "hero-vice": [
-    crop(0, 0.42, 0.32, 1.05),
-    crop(3, 0.48, 0.3, 1.15),
-    crop(2, 0.55, 0.42, 1.1),
-    crop(1, 0.48, 0.3, 1),
-    crop(6, 0.55, 0.55, 1.15),
-    crop(7, 0.45, 0.55, 1.15),
+    { photo: 0, fx: 0.42, fy: 0.32, zoom: 1.05 },
+    { photo: 3, fx: 0.48, fy: 0.3, zoom: 1.15 },
+    { photo: 2, fx: 0.55, fy: 0.42, zoom: 1.1 },
+    { photo: 1, fx: 0.48, fy: 0.3, zoom: 1 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
+    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
   ],
   "vice-grid": [
-    crop(0, 0.5, 0.32, 1.15),
-    crop(3, 0.5, 0.35, 1.1),
-    crop(1, 0.5, 0.35, 1.15),
-    crop(2, 0.5, 0.45, 1.05),
-    crop(6, 0.55, 0.55, 1.15),
-    crop(4, 0.5, 0.3, 1.25),
-    crop(7, 0.45, 0.55, 1.15),
-    crop(2, 0.72, 0.45, 1.4),
+    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.15 },
+    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.05 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.15 },
+    { photo: 4, fx: 0.5, fy: 0.3, zoom: 1.25 },
+    { photo: 7, fx: 0.45, fy: 0.55, zoom: 1.15 },
+    { photo: 2, fx: 0.72, fy: 0.45, zoom: 1.4 },
   ],
   "hero-three": [
-    crop(0, 0.5, 0.32, 1.05),
-    crop(2, 0.5, 0.45, 1.1),
-    crop(1, 0.5, 0.35, 1.2),
-    crop(3, 0.5, 0.35, 1.15),
+    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.05 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
+    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.15 },
   ],
   tilted: [
-    crop(0, 0.5, 0.32, 1.1),
-    crop(1, 0.5, 0.35, 1.15),
-    crop(2, 0.5, 0.45, 1.1),
-    crop(3, 0.5, 0.35, 1.2),
-    crop(6, 0.55, 0.55, 1.1),
+    { photo: 0, fx: 0.5, fy: 0.32, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.15 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
+    { photo: 3, fx: 0.5, fy: 0.35, zoom: 1.2 },
+    { photo: 6, fx: 0.55, fy: 0.55, zoom: 1.1 },
   ],
   "full-bleed": [
-    crop(0, 0.5, 0.35, 1.05),
-    crop(2, 0.5, 0.45, 1.1),
-    crop(1, 0.5, 0.35, 1.2),
+    { photo: 0, fx: 0.5, fy: 0.35, zoom: 1.05 },
+    { photo: 2, fx: 0.5, fy: 0.45, zoom: 1.1 },
+    { photo: 1, fx: 0.5, fy: 0.35, zoom: 1.2 },
   ],
 };
 
 /** A fresh default state (screenshot scenes start from this as well). */
 export function defaultState() {
   return {
+    layout: "chaos",
+    grade: "sunset",
+    size: "landscape",
     title: "PALM HEAT",
     subtitle: "where the sun never sets",
     place: "CORAL BAY",
     tagline: "EVERY STREET HAS A STORY",
-    layout: "chaos",
-    grade: "sunset",
-    size: "landscape",
     heat: 5,
     onePhoto: false,
     showCaptions: true,
@@ -173,8 +159,8 @@ export function loadImage(src) {
 /** Loads every sample photo; resolves once all are drawable. */
 export async function loadSamples() {
   photos.length = 0;
-  for (let i = 0; i < SAMPLE_SHOTS.length; i += 1) {
-    photos.push(await loadImage(SAMPLE_SHOTS[i].src));
+  for (const sample of SAMPLE_SHOTS) {
+    photos.push(await loadImage(sample.src));
   }
   return photos;
 }
@@ -194,16 +180,18 @@ function snapshotDoc() {
 
 function pushUndo() {
   past.push(snapshotDoc());
-  past.splice(0, Math.max(past.length - 40, 0));
+  if (past.length > 40) {
+    past.splice(0, past.length - 40);
+  }
   future = [];
   updateUndoButtons();
 }
 
 function applySnapshot(snap) {
   const saved = JSON.parse(snap);
-  Object.entries(saved).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(saved)) {
     doc[key] = value;
-  });
+  }
   sync();
   paint();
 }
@@ -248,7 +236,7 @@ export function paint() {
   const out = drawCoverGrid(cv, doc, photos);
   tiles = out.panels;
   drawSelected();
-  note.textContent = `Preview · ${size.label} · ${LAYOUTS[doc.layout]} · ${GRADES[doc.grade]}`;
+  note.textContent = "Preview · " + size.label + " · " + LAYOUTS[doc.layout] + " · " + GRADES[doc.grade];
 }
 
 /** Outlines the selected panel on the preview canvas. */
@@ -267,7 +255,7 @@ function drawSelected() {
   pen.fillStyle = "#ffd23f";
   pen.font = "bold " + Math.max(cv.width / 64, 16) + "px sans-serif";
   pen.textAlign = "left";
-  pen.fillText(`PANEL ${1 + doc.selectedPanel}`, 14 + sel.x, Math.max(cv.width / 48, 22) + sel.y);
+  pen.fillText("PANEL " + (1 + doc.selectedPanel), 14 + sel.x, Math.max(cv.width / 48, 22) + sel.y);
   pen.restore();
 }
 
@@ -279,7 +267,8 @@ export function fillAllWithShot(shotIndex) {
   pushUndo();
   const xs = [0.5, 0.3, 0.7, 0.5, 0.25, 0.75, 0.5, 0.35];
   const ys = [0.32, 0.45, 0.4, 0.3, 0.5, 0.42, 0.6, 0.35];
-  Object.entries(doc.assignments).forEach(([key, list]) => {
+  for (const key of Object.keys(doc.assignments)) {
+    const list = doc.assignments[key];
     doc.assignments[key] = list.map((c, i) => ({
       ...c,
       photo: shotIndex,
@@ -287,7 +276,7 @@ export function fillAllWithShot(shotIndex) {
       fy: ys[i % ys.length],
       zoom: 1.25,
     }));
-  });
+  }
   paint();
 }
 
@@ -362,24 +351,23 @@ function renderShotStrip() {
     return; // no strip on this page
   }
   el.innerHTML = "";
-  for (let idx = 0; idx < photos.length; idx += 1) {
-    const img = photos[idx];
-    const el2 = document.createElement("button");
-    el2.type = "button";
-    el2.className = "thumb";
+  photos.forEach((img, idx) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "thumb";
     const label = shotNames[idx] ?? "Photo " + (idx + 1);
-    el2.title = label;
+    btn.title = label;
     const thumb = document.createElement("img");
     thumb.src = img.src;
-    thumb.alt = el2.title;
-    el2.appendChild(thumb);
+    thumb.alt = btn.title;
+    btn.appendChild(thumb);
     const cell = doc.assignments[doc.layout]?.[doc.selectedPanel];
     if (idx === cell?.photo) {
-      el2.classList.add("in-use");
+      btn.classList.add("in-use");
     }
-    el2.addEventListener("click", () => assignShotToSelected(idx));
-    el.appendChild(el2);
-  }
+    btn.addEventListener("click", () => assignShotToSelected(idx));
+    el.appendChild(btn);
+  });
 }
 
 /** Downloads a blob as a file. */
@@ -395,28 +383,27 @@ function downloadBlob(blob, name) {
 export async function exportPNG(sizeKey) {
   const blob = await exportCoverPNG(doc, photos, sizeKey);
   const size = EXPORT_SIZES[sizeKey];
-  downloadBlob(blob, `palm-heat-cover-${size.w}x${size.h}.png`);
-  note.textContent = `Saved palm-heat-cover-${size.w}x${size.h}.png`;
+  downloadBlob(blob, "palm-heat-cover-" + size.w + "x" + size.h + ".png");
+  note.textContent = "Saved palm-heat-cover-" + size.w + "x" + size.h + ".png";
 }
 
 /** Exports all three post sizes, one PNG each. */
 export async function exportAllSizes() {
-  const keys = Object.keys(EXPORT_SIZES);
-  for (let i = 0; i < keys.length; i += 1) {
-    await exportPNG(keys[i]);
+  for (const key of Object.keys(EXPORT_SIZES)) {
+    await exportPNG(key);
   }
   note.textContent = "All 3 sizes saved: 1920 × 1080, 1080 × 1350, 1080 × 1080";
 }
 
 /** Adds user files as photos (read locally only — never uploaded). */
 export async function addUserFiles(files) {
-  for (let i = 0; i < files.length; i += 1) {
-    const f = files[i];
-    if (f.type.startsWith("image/")) {
-      const img = await loadImage(URL.createObjectURL(f));
-      photos.push(img);
-      shotNames.push(f.name);
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) {
+      continue;
     }
+    const img = await loadImage(URL.createObjectURL(f));
+    photos.push(img);
+    shotNames.push(f.name);
   }
   renderShotStrip();
   paint();
@@ -485,13 +472,13 @@ function bind() {
       paint();
     });
   });
-  ["title", "subtitle", "place", "tagline"].forEach((id) => {
+  for (const id of ["title", "subtitle", "place", "tagline"]) {
     document.getElementById(id).addEventListener("input", (evt) => {
       doc[id] = evt.target.value;
       paint();
     });
     document.getElementById(id).addEventListener("change", pushUndo);
-  });
+  }
   document.getElementById("one-photo").addEventListener("change", (evt) => {
     pushUndo();
     doc.onePhoto = evt.target.checked;
